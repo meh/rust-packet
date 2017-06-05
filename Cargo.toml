@@ -1,0 +1,9 @@
+[package]
+name = "packet"
+version = "0.1.0"
+authors = ["meh. <meh@schizofreni.co>"]
+
+[dependencies]
+error-chain = "0.10"
+bitflags    = "0.9"
+byteorder   = "1.0"
