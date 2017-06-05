@@ -19,6 +19,9 @@ pub trait Buffer {
 	/// Request more memory for the same layer.
 	fn more(&mut self, size: usize) -> Result<(), ()>;
 
+	/// Clear the buffer.
+	fn clear(&mut self);
+
 	/// Check the total used amount.
 	fn used(&self) -> usize;
 

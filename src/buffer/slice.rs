@@ -61,6 +61,12 @@ impl<'a> super::Buffer for Buffer<'a> {
 		Ok(())
 	}
 
+	fn clear(&mut self) {
+		self.offset = 0;
+		self.length = 0;
+		self.used   = 0;
+	}
+
 	fn used(&self) -> usize {
 		self.used
 	}

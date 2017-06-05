@@ -50,6 +50,12 @@ impl super::Buffer for Buffer {
 		Ok(())
 	}
 
+	fn clear(&mut self) {
+		self.inner.clear();
+		self.offset = 0;
+		self.length = 0;
+	}
+
 	fn used(&self) -> usize {
 		self.inner.len()
 	}
