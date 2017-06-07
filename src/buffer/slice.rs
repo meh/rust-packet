@@ -14,6 +14,8 @@
 
 use std::ops::{Deref, DerefMut};
 
+use error::*;
+
 /// A static buffer.
 pub struct Buffer<'a> {
 	inner: &'a mut [u8],
@@ -37,9 +39,15 @@ impl<'a> Buffer<'a> {
 }
 
 impl<'a> super::Buffer for Buffer<'a> {
-	fn next(&mut self, size: usize) -> Result<(), ()> {
+	type Inner = &'a mut [u8];
+
+	fn into_inner(self) -> Self::Inner {
+		self.inner
+	}
+
+	fn next(&mut self, size: usize) -> Result<()> {
 		if self.inner.len() < self.used + size {
-			return Err(());
+			return Err(ErrorKind::SmallBuffer.into());
 		}
 
 		self.offset  = self.used;
@@ -49,9 +57,9 @@ impl<'a> super::Buffer for Buffer<'a> {
 		Ok(())
 	}
 
-	fn more(&mut self, size: usize) -> Result<(), ()> {
+	fn more(&mut self, size: usize) -> Result<()> {
 		if self.inner.len() < self.used + size {
-			return Err(());
+			return Err(ErrorKind::SmallBuffer.into());
 		}
 
 		self.offset  = self.used;
@@ -71,12 +79,20 @@ impl<'a> super::Buffer for Buffer<'a> {
 		self.used
 	}
 
+	fn offset(&self) -> usize {
+		self.offset
+	}
+
+	fn length(&self) -> usize {
+		self.length
+	}
+
 	fn data(&self) -> &[u8] {
-		&self.inner[self.offset .. self.length]
+		&self.inner[self.offset .. self.offset + self.length]
 	}
 
 	fn data_mut(&mut self) -> &mut [u8] {
-		&mut self.inner[self.offset .. self.length]
+		&mut self.inner[self.offset .. self.offset + self.length]
 	}
 }
 

@@ -12,7 +12,7 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-use std::ops::Deref;
+use std::fmt;
 
 use error::*;
 use size::{Min, Size};
@@ -59,9 +59,21 @@ pub enum Number {
 	Unknown(u8),
 }
 
-impl<B: Deref<Target = [u8]>> Option<B> {
+impl<B: AsRef<[u8]>> fmt::Debug for Option<B> {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		f.debug_struct("ip::v4::Option")
+			.field("is_copied", &self.is_copied())
+			.field("class", &self.class())
+			.field("number", &self.number())
+			.field("length", &self.length())
+			.field("payload", &self.payload())
+			.finish()
+	}
+}
+
+impl<B: AsRef<[u8]>> Option<B> {
 	pub fn new(buffer: B) -> Result<Option<B>> {
-		if buffer.len() < 1 {
+		if buffer.as_ref().len() < 1 {
 			return Err(ErrorKind::InvalidPacket.into());
 		}
 
@@ -69,7 +81,7 @@ impl<B: Deref<Target = [u8]>> Option<B> {
 			buffer: buffer,
 		};
 
-		if option.buffer.len() < option.length() {
+		if option.buffer.as_ref().len() < option.length() {
 			return Err(ErrorKind::InvalidPacket.into());
 		}
 
@@ -83,19 +95,19 @@ impl<B> Min for Option<B> {
 	}
 }
 
-impl<B: Deref<Target = [u8]>> Size for Option<B> {
+impl<B: AsRef<[u8]>> Size for Option<B> {
 	fn size(&self) -> usize {
 		self.length()
 	}
 }
 
-impl<B: Deref<Target = [u8]>> Option<B> {
+impl<B: AsRef<[u8]>> Option<B> {
 	pub fn is_copied(&self) -> bool {
-		self.buffer[0] >> 7 == 1
+		self.buffer.as_ref()[0] >> 7 == 1
 	}
 
 	pub fn class(&self) -> Class {
-		match ((self.buffer[0] >> 5) & 0b011).into() {
+		match ((self.buffer.as_ref()[0] >> 5) & 0b011).into() {
 			0 => Class::Control,
 			2 => Class::Debugging,
 			v => Class::Reserved(v),
@@ -103,7 +115,7 @@ impl<B: Deref<Target = [u8]>> Option<B> {
 	}
 
 	pub fn number(&self) -> Number {
-		(self.buffer[0] & 0b11111).into()
+		(self.buffer.as_ref()[0] & 0b11111).into()
 	}
 
 	pub fn length(&self) -> usize {
@@ -113,19 +125,19 @@ impl<B: Deref<Target = [u8]>> Option<B> {
 				1,
 
 			_ =>
-				self.buffer[1] as usize
+				self.buffer.as_ref()[1] as usize
 		}
 	}
 }
 
-impl<B: Deref<Target = [u8]>> P for Option<B> {
+impl<B: AsRef<[u8]>> P for Option<B> {
 	fn header(&self) -> &[u8] {
 		match self.length() {
 			1 =>
-				&self.buffer[.. 1],
+				&self.buffer.as_ref()[.. 1],
 
 			_ =>
-				&self.buffer[.. 2],
+				&self.buffer.as_ref()[.. 2],
 		}
 	}
 
@@ -135,7 +147,7 @@ impl<B: Deref<Target = [u8]>> P for Option<B> {
 				&[],
 
 			length =>
-				&self.buffer[2 .. length]
+				&self.buffer.as_ref()[2 .. length]
 		}
 	}
 }

@@ -30,4 +30,8 @@ pub use buffer::Buffer;
 pub mod size;
 pub use size::Size;
 
+pub mod builder;
+pub use builder::Builder;
+
 pub mod ip;
+pub mod icmp;

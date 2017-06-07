@@ -12,18 +12,31 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+use error::*;
+
 pub trait Buffer {
+	type Inner: AsMut<[u8]>;
+
+	/// Convert the buffer into the inner type.
+	fn into_inner(self) -> Self::Inner;
+
 	/// Go to the next layer.
-	fn next(&mut self, size: usize) -> Result<(), ()>;
+	fn next(&mut self, size: usize) -> Result<()>;
 
 	/// Request more memory for the same layer.
-	fn more(&mut self, size: usize) -> Result<(), ()>;
+	fn more(&mut self, size: usize) -> Result<()>;
 
 	/// Clear the buffer.
 	fn clear(&mut self);
 
-	/// Check the total used amount.
+	/// The number of bytes used by the buffer.
 	fn used(&self) -> usize;
+
+	/// Offset from the beginning of the buffer.
+	fn offset(&self) -> usize;
+
+	/// The length of the current layer.
+	fn length(&self) -> usize;
 
 	/// Get a slice over the current layer.
 	fn data(&self) -> &[u8];

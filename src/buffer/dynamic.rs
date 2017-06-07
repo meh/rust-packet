@@ -14,6 +14,8 @@
 
 use std::ops::{Deref, DerefMut};
 
+use error::*;
+
 /// A growable buffer.
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct Buffer {
@@ -31,7 +33,13 @@ impl Buffer {
 }
 
 impl super::Buffer for Buffer {
-	fn next(&mut self, size: usize) -> Result<(), ()> {
+	type Inner = Vec<u8>;
+
+	fn into_inner(self) -> Self::Inner {
+		self.inner
+	}
+
+	fn next(&mut self, size: usize) -> Result<()> {
 		self.offset += self.length;
 		self.length  = size;
 
@@ -41,7 +49,7 @@ impl super::Buffer for Buffer {
 		Ok(())
 	}
 
-	fn more(&mut self, size: usize) -> Result<(), ()> {
+	fn more(&mut self, size: usize) -> Result<()> {
 		self.length += size;
 
 		let current = self.inner.len();
@@ -60,12 +68,20 @@ impl super::Buffer for Buffer {
 		self.inner.len()
 	}
 
+	fn offset(&self) -> usize {
+		self.offset
+	}
+
+	fn length(&self) -> usize {
+		self.length
+	}
+
 	fn data(&self) -> &[u8] {
-		&self.inner[self.offset .. self.length]
+		&self.inner[self.offset .. self.offset + self.length]
 	}
 
 	fn data_mut(&mut self) -> &mut [u8] {
-		&mut self.inner[self.offset .. self.length]
+		&mut self.inner[self.offset .. self.offset + self.length]
 	}
 }
 

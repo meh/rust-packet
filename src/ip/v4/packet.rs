@@ -12,7 +12,7 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-use std::ops::Deref;
+use std::fmt;
 use std::net::Ipv4Addr;
 use byteorder::{ReadBytesExt, BigEndian};
 
@@ -28,9 +28,30 @@ pub struct Packet<B> {
 	buffer: B,
 }
 
-impl<B: Deref<Target = [u8]>> Packet<B> {
+impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		f.debug_struct("ip::v4::Packet")
+			.field("version", &self.version())
+			.field("header", &self.header())
+			.field("dscp", &self.dscp())
+			.field("ecn", &self.ecn())
+			.field("length", &self.length())
+			.field("id", &self.id())
+			.field("flags", &self.flags())
+			.field("offset", &self.offset())
+			.field("ttl", &self.ttl())
+			.field("protocol", &self.protocol())
+			.field("checksum", &self.checksum())
+			.field("source", &self.source())
+			.field("destination", &self.destination())
+			.field("payload", &self.payload())
+			.finish()
+	}
+}
+
+impl<B: AsRef<[u8]>> Packet<B> {
 	pub fn new(buffer: B) -> Result<Packet<B>> {
-		if buffer.len() < Self::min() {
+		if buffer.as_ref().len() < Self::min() {
 			return Err(ErrorKind::InvalidPacket.into());
 		}
 
@@ -38,7 +59,11 @@ impl<B: Deref<Target = [u8]>> Packet<B> {
 			buffer: buffer,
 		};
 
-		if packet.buffer.len() < packet.header() as usize * 4 {
+		if packet.buffer.as_ref()[0] >> 4 != 4 {
+			return Err(ErrorKind::InvalidPacket.into());
+		}
+
+		if packet.buffer.as_ref().len() < packet.header() as usize * 4 {
 			return Err(ErrorKind::InvalidPacket.into());
 		}
 
@@ -58,55 +83,55 @@ impl<B> Max for Packet<B> {
 	}
 }
 
-impl<B: Deref<Target = [u8]>> Size for Packet<B> {
+impl<B: AsRef<[u8]>> Size for Packet<B> {
 	fn size(&self) -> usize {
 		self.header() as usize * 4
 	}
 }
 
-impl<B: Deref<Target = [u8]>> Packet<B> {
+impl<B: AsRef<[u8]>> Packet<B> {
 	pub fn version(&self) -> u8 {
-		self.buffer[0] >> 4
+		self.buffer.as_ref()[0] >> 4
 	}
 
 	pub fn header(&self) -> u8 {
-		self.buffer[0] & 0xf
+		self.buffer.as_ref()[0] & 0b1111
 	}
 
 	pub fn dscp(&self) -> u8 {
-		self.buffer[1] >> 2
+		self.buffer.as_ref()[1] >> 2
 	}
 
 	pub fn ecn(&self) -> u8 {
-		self.buffer[1] & 0x3
+		self.buffer.as_ref()[1] & 0b11
 	}
 
 	pub fn length(&self) -> u16 {
-		(&self.buffer[2 ..]).read_u16::<BigEndian>().unwrap()
+		(&self.buffer.as_ref()[2 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
 	pub fn id(&self) -> u16 {
-		(&self.buffer[4 ..]).read_u16::<BigEndian>().unwrap()
+		(&self.buffer.as_ref()[4 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
 	pub fn flags(&self) -> Flags {
-		Flags::from_bits((&self.buffer[6 ..]).read_u16::<BigEndian>().unwrap() >> 13).unwrap()
+		Flags::from_bits((&self.buffer.as_ref()[6 ..]).read_u16::<BigEndian>().unwrap() >> 13).unwrap()
 	}
 
 	pub fn offset(&self) -> u16 {
-		(&self.buffer[6 ..]).read_u16::<BigEndian>().unwrap() & 0x1fff
+		(&self.buffer.as_ref()[6 ..]).read_u16::<BigEndian>().unwrap() & 0x1fff
 	}
 
 	pub fn ttl(&self) -> u8 {
-		self.buffer[8]
+		self.buffer.as_ref()[8]
 	}
 
 	pub fn protocol(&self) -> Protocol {
-		self.buffer[9].into()
+		self.buffer.as_ref()[9].into()
 	}
 
 	pub fn checksum(&self) -> u16 {
-		(&self.buffer[10 ..]).read_u16::<BigEndian>().unwrap()
+		(&self.buffer.as_ref()[10 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
 	pub fn is_valid(&self) -> bool {
@@ -115,34 +140,34 @@ impl<B: Deref<Target = [u8]>> Packet<B> {
 
 	pub fn source(&self) -> Ipv4Addr {
 		Ipv4Addr::new(
-			self.buffer[12],
-			self.buffer[13],
-			self.buffer[14],
-			self.buffer[15])
+			self.buffer.as_ref()[12],
+			self.buffer.as_ref()[13],
+			self.buffer.as_ref()[14],
+			self.buffer.as_ref()[15])
 	}
 
 	pub fn destination(&self) -> Ipv4Addr {
 		Ipv4Addr::new(
-			self.buffer[16],
-			self.buffer[17],
-			self.buffer[18],
-			self.buffer[19])
+			self.buffer.as_ref()[16],
+			self.buffer.as_ref()[17],
+			self.buffer.as_ref()[18],
+			self.buffer.as_ref()[19])
 	}
 
 	pub fn options(&self) -> OptionIter {
 		OptionIter {
-			buffer: &self.buffer[20 .. (self.header() as usize * 4) - 20],
+			buffer: &self.buffer.as_ref()[20 .. (self.header() as usize * 4) - 20],
 		}
 	}
 }
 
-impl<B: Deref<Target = [u8]>> P for Packet<B> {
+impl<B: AsRef<[u8]>> P for Packet<B> {
 	fn header(&self) -> &[u8] {
-		&self.buffer[.. self.header() as usize * 4]
+		&self.buffer.as_ref()[.. self.header() as usize * 4]
 	}
 
 	fn payload(&self) -> &[u8] {
-		&self.buffer[self.header() as usize * 4 ..]
+		&self.buffer.as_ref()[self.header() as usize * 4 ..]
 	}
 }
 
@@ -182,9 +207,9 @@ mod test {
 
 	#[test]
 	fn short_packet() {
-		assert!(ip::v4::Packet::new(&[0; 10][..]).is_err());
-		assert!(ip::v4::Packet::new(&[0; 19][..]).is_err());
-		assert!(ip::v4::Packet::new(&[0; 20][..]).is_ok());
+		assert!(ip::v4::Packet::new(&[64; 10][..]).is_err());
+		assert!(ip::v4::Packet::new(&[64; 19][..]).is_err());
+		assert!(ip::v4::Packet::new(&[64; 20][..]).is_ok());
 	}
 
 	#[test]
@@ -192,7 +217,6 @@ mod test {
 		let packet: [u8; 20] = [0x45, 0x00, 0x00, 0x34, 0x2d, 0x87, 0x00, 0x00, 0x2c, 0x06, 0x5c, 0x74, 0x42, 0x66, 0x01, 0x6c, 0xc0, 0xa8, 0x00, 0x4f];
 		let packet = ip::v4::Packet::new(&packet[..]).unwrap();
 
-		assert_eq!(packet.version(), 4);
 		assert_eq!(packet.header(), 5);
 		assert_eq!(packet.length(), 52);
 		assert_eq!(packet.id(), 0x2d87);
