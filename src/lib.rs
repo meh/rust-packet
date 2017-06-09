@@ -12,8 +12,6 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-#![feature(trace_macros)]
-
 #[macro_use]
 extern crate error_chain;
 #[macro_use]
