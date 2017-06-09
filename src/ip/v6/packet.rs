@@ -33,13 +33,13 @@ sized!(Packet,
 	header {
 		min:  0,
 		max:  0,
-		size: p => 0,
+		size: 0,
 	}
 
 	payload {
 		min:  0,
 		max:  0,
-		size: p => 0,
+		size: 0,
 	});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {

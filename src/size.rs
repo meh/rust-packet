@@ -42,6 +42,16 @@ macro_rules! sized {
 		sized!($name => $part; $($rest)*);
 	);
 
+	($name:ident => $part:ident; size: $value:expr, $($rest:tt)*) => (
+		impl<B: AsRef<[u8]>> ::size::$part::Size for $name<B> {
+			fn size(&self) -> usize {
+				$value
+			}
+		}
+
+		sized!($name => $part; $($rest)*);
+	);
+
 	($name:ident => $part:ident; size: $packet:ident => $value:expr, $($rest:tt)*) => (
 		impl<B: AsRef<[u8]>> ::size::$part::Size for $name<B> {
 			fn size(&self) -> usize {
