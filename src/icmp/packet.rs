@@ -27,7 +27,7 @@ pub struct Packet<B> {
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		f.debug_struct("icmp::Packet")
+		f.debug_struct(if self.is_valid() { "icmp::Packet" } else { "icmp::Packet!" })
 			.field("kind", &self.kind())
 			.field("code", &self.code())
 			.field("checksum", &self.checksum())
@@ -70,7 +70,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 
 	pub fn is_valid(&self) -> bool {
-		checksum(P::header(self)) == self.checksum()
+		checksum(self.buffer.as_ref()) == self.checksum()
 	}
 
 	pub fn echo(&self) -> Result<echo::Packet<&B>> {

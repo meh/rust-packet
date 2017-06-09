@@ -15,12 +15,31 @@
 use std::fmt;
 
 use error::*;
-use size::{Min, Size};
+use size;
 use packet::Packet as P;
 
 pub struct Option<B> {
 	buffer: B,
 }
+
+sized!(Option,
+	header {
+		min: 1,
+		max: 2,
+		size: p => match p.length() {
+			1 => 1,
+			_ => 2,
+		},
+	}
+
+	payload {
+		min:  0,
+		max:  32,
+		size: p => match p.length() {
+			1 => 0,
+			n => n as usize - 2,
+		},
+	});
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Class {
@@ -73,31 +92,19 @@ impl<B: AsRef<[u8]>> fmt::Debug for Option<B> {
 
 impl<B: AsRef<[u8]>> Option<B> {
 	pub fn new(buffer: B) -> Result<Option<B>> {
-		if buffer.as_ref().len() < 1 {
-			return Err(ErrorKind::InvalidPacket.into());
-		}
-
 		let option = Option {
 			buffer: buffer,
 		};
 
-		if option.buffer.as_ref().len() < option.length() {
+		if option.buffer.as_ref().len() < <Self as size::header::Min>::min() {
+			return Err(ErrorKind::InvalidPacket.into());
+		}
+
+		if option.buffer.as_ref().len() < option.length() as usize {
 			return Err(ErrorKind::InvalidPacket.into());
 		}
 
 		Ok(option)
-	}
-}
-
-impl<B> Min for Option<B> {
-	fn min() -> usize {
-		1
-	}
-}
-
-impl<B: AsRef<[u8]>> Size for Option<B> {
-	fn size(&self) -> usize {
-		self.length()
 	}
 }
 
@@ -118,14 +125,14 @@ impl<B: AsRef<[u8]>> Option<B> {
 		(self.buffer.as_ref()[0] & 0b11111).into()
 	}
 
-	pub fn length(&self) -> usize {
+	pub fn length(&self) -> u8 {
 		match self.number() {
 			Number::End |
 			Number::NoOperation =>
 				1,
 
 			_ =>
-				self.buffer.as_ref()[1] as usize
+				self.buffer.as_ref()[1]
 		}
 	}
 }
@@ -147,7 +154,7 @@ impl<B: AsRef<[u8]>> P for Option<B> {
 				&[],
 
 			length =>
-				&self.buffer.as_ref()[2 .. length]
+				&self.buffer.as_ref()[2 .. length as usize]
 		}
 	}
 }

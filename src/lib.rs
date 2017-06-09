@@ -12,6 +12,8 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+#![feature(trace_macros)]
+
 #[macro_use]
 extern crate error_chain;
 #[macro_use]
@@ -21,17 +23,19 @@ extern crate byteorder;
 mod error;
 pub use error::*;
 
+#[macro_use]
+pub mod size;
+pub use size::Size;
+
 mod packet;
 pub use packet::Packet;
 
 pub mod buffer;
 pub use buffer::Buffer;
 
-pub mod size;
-pub use size::Size;
-
 pub mod builder;
 pub use builder::Builder;
 
 pub mod ip;
 pub mod icmp;
+pub mod tcp;

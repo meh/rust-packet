@@ -27,21 +27,21 @@ pub fn checksum(buffer: &[u8]) -> u16 {
 	use std::io::Cursor;
 	use byteorder::{ReadBytesExt, BigEndian};
 
-	let mut acc = 0xffffu32;
-	let mut buf = Cursor::new(buffer);
+	let mut result = 0xffffu32;
+	let mut buffer = Cursor::new(buffer);
 
-	while let Ok(value) = buf.read_u16::<BigEndian>() {
+	while let Ok(value) = buffer.read_u16::<BigEndian>() {
 		// Skip checksum field.
-		if buf.position() == 4 {
+		if buffer.position() == 4 {
 			continue;
 		}
 
-		acc += value as u32;
+		result += value as u32;
 
-		if acc > 0xffff {
-			acc -= 0xffff;
+		if result > 0xffff {
+			result -= 0xffff;
 		}
 	}
 
-	!acc as u16
+	!result as u16
 }

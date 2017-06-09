@@ -24,16 +24,50 @@ pub use self::packet::Packet;
 mod builder;
 pub use self::builder::Builder;
 
-pub fn checksum(buffer: &[u8]) -> u16 {
+use ip;
+use ip::Protocol;
+
+pub fn checksum<B: AsRef<[u8]>>(ip: &ip::Packet<B>, buffer: &[u8]) -> u16 {
 	use std::io::Cursor;
-	use byteorder::{ReadBytesExt, BigEndian};
+	use byteorder::{WriteBytesExt, ReadBytesExt, BigEndian};
+
+	let mut prefix = [0u8; 40];
+	match *ip {
+		ip::Packet::V4(ref packet) => {
+			prefix[0 .. 4].copy_from_slice(&packet.source().octets());
+			prefix[4 .. 8].copy_from_slice(&packet.destination().octets());
+
+			prefix[9] = Protocol::Tcp.into();
+			Cursor::new(&mut prefix[10 ..])
+				.write_u16::<BigEndian>(buffer.len() as u16).unwrap();
+		}
+
+		ip::Packet::V6(ref packet) => {
+			unimplemented!();
+		}
+	};
 
 	let mut result = 0xffffu32;
 	let mut buffer = Cursor::new(buffer);
+	let mut prefix = match *ip {
+		ip::Packet::V4(_) =>
+			Cursor::new(&prefix[0 .. 12]),
+
+		ip::Packet::V6(_) =>
+			Cursor::new(&prefix[0 .. 40]),
+	};
+
+	while let Ok(value) = prefix.read_u16::<BigEndian>() {
+		result += value as u32;
+
+		if result > 0xffff {
+			result -= 0xffff;
+		}
+	}
 
 	while let Ok(value) = buffer.read_u16::<BigEndian>() {
 		// Skip checksum field.
-		if buffer.position() == 12 {
+		if buffer.position() == 18 {
 			continue;
 		}
 

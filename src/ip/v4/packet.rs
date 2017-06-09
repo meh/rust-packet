@@ -17,20 +17,34 @@ use std::net::Ipv4Addr;
 use byteorder::{ReadBytesExt, BigEndian};
 
 use error::*;
-use size::{Min, Max, Size};
+use size;
 use packet::Packet as P;
 use ip::Protocol;
 use ip::v4::Flags;
 use ip::v4::option;
 use ip::v4::checksum;
 
+#[derive(Clone)]
 pub struct Packet<B> {
 	buffer: B,
 }
 
+sized!(Packet,
+	header {
+		min:  20,
+		max:  60,
+		size: p => p.header() as usize * 4,
+	}
+
+	payload {
+		min:  0,
+		max:  u16::max_value() as usize - 60,
+		size: p => p.length() as usize - (p.header() as usize * 4),
+	});
+
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		f.debug_struct("ip::v4::Packet")
+		f.debug_struct(if self.is_valid() { "ip::v4::Packet" } else { "ip::v4::Packet!" })
 			.field("version", &self.version())
 			.field("header", &self.header())
 			.field("dscp", &self.dscp())
@@ -51,13 +65,13 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 
 impl<B: AsRef<[u8]>> Packet<B> {
 	pub fn new(buffer: B) -> Result<Packet<B>> {
-		if buffer.as_ref().len() < Self::min() {
-			return Err(ErrorKind::InvalidPacket.into());
-		}
-
 		let packet = Packet {
 			buffer: buffer,
 		};
+
+		if packet.buffer.as_ref().len() < <Self as size::header::Min>::min() {
+			return Err(ErrorKind::InvalidPacket.into());
+		}
 
 		if packet.buffer.as_ref()[0] >> 4 != 4 {
 			return Err(ErrorKind::InvalidPacket.into());
@@ -68,24 +82,6 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		}
 
 		Ok(packet)
-	}
-}
-
-impl<B> Min for Packet<B> {
-	fn min() -> usize {
-		20
-	}
-}
-
-impl<B> Max for Packet<B> {
-	fn max() -> usize {
-		60
-	}
-}
-
-impl<B: AsRef<[u8]>> Size for Packet<B> {
-	fn size(&self) -> usize {
-		self.header() as usize * 4
 	}
 }
 
@@ -115,7 +111,8 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 
 	pub fn flags(&self) -> Flags {
-		Flags::from_bits((&self.buffer.as_ref()[6 ..]).read_u16::<BigEndian>().unwrap() >> 13).unwrap()
+		Flags::from_bits((&self.buffer.as_ref()[6 ..])
+			.read_u16::<BigEndian>().unwrap() >> 13).unwrap()
 	}
 
 	pub fn offset(&self) -> u16 {
@@ -156,7 +153,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 	pub fn options(&self) -> OptionIter {
 		OptionIter {
-			buffer: &self.buffer.as_ref()[20 .. (self.header() as usize * 4) - 20],
+			buffer: &self.buffer.as_ref()[20 .. (self.header() as usize * 4)],
 		}
 	}
 }
@@ -179,6 +176,8 @@ impl<'a> Iterator for OptionIter<'a> {
 	type Item = Result<option::Option<&'a [u8]>>;
 
 	fn next(&mut self) -> Option<Self::Item> {
+		use size::Size;
+
 		if self.buffer.is_empty() {
 			return None;
 		}
@@ -189,7 +188,7 @@ impl<'a> Iterator for OptionIter<'a> {
 					return None;
 				}
 
-				self.buffer = &self.buffer[option.length() ..];
+				self.buffer = &self.buffer[option.size() ..];
 				Some(Ok(option))
 			}
 
@@ -214,7 +213,7 @@ mod test {
 
 	#[test]
 	fn values() {
-		let packet: [u8; 20] = [0x45, 0x00, 0x00, 0x34, 0x2d, 0x87, 0x00, 0x00, 0x2c, 0x06, 0x5c, 0x74, 0x42, 0x66, 0x01, 0x6c, 0xc0, 0xa8, 0x00, 0x4f];
+		let packet = [0x45u8, 0x00, 0x00, 0x34, 0x2d, 0x87, 0x00, 0x00, 0x2c, 0x06, 0x5c, 0x74, 0x42, 0x66, 0x01, 0x6c, 0xc0, 0xa8, 0x00, 0x4f];
 		let packet = ip::v4::Packet::new(&packet[..]).unwrap();
 
 		assert_eq!(packet.header(), 5);

@@ -12,9 +12,13 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+use std::io::Cursor;
+use byteorder::{WriteBytesExt, BigEndian};
+
 use error::*;
 use buffer::{self, Buffer};
 use builder::{Builder as Build, Finalization};
+use icmp::checksum;
 
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
@@ -51,9 +55,29 @@ impl<B: Buffer> Builder<B> {
 
 		Ok(echo)
 	}
+
+	pub fn timestamp(self) -> Result<timestamp::Builder<B>> {
+		let mut timestamp = timestamp::Builder::with(self.buffer)?;
+		timestamp.finalizer().extend(self.finalizer.into());
+
+		Ok(timestamp)
+	}
 }
 
-mod echo {
+fn prepare<B: Buffer>(finalizer: &mut Finalization, buffer: &B) {
+	let offset = buffer.offset();
+	let length = buffer.length();
+
+	finalizer.add(move |out| {
+		let checksum = checksum(&out[offset .. offset + length]);
+		Cursor::new(&mut out[offset + 2 ..])
+			.write_u16::<BigEndian>(checksum)?;
+
+		Ok(())
+	});
+}
+
+pub mod echo {
 	use std::io::Cursor;
 	use byteorder::{WriteBytesExt, BigEndian};
 
@@ -87,10 +111,12 @@ mod echo {
 			&mut self.finalizer
 		}
 
-		fn build(self) -> Result<B::Inner> {
+		fn build(mut self) -> Result<B::Inner> {
 			if !self.kind {
 				return Err(ErrorKind::InvalidPacket.into());
 			}
+
+			super::prepare(&mut self.finalizer, &self.buffer);
 
 			let mut buffer = self.buffer.into_inner();
 			self.finalizer.finalize(buffer.as_mut())?;
@@ -150,13 +176,199 @@ mod echo {
 	}
 }
 
+pub mod timestamp {
+	use std::io::Cursor;
+	use byteorder::{WriteBytesExt, BigEndian};
+
+	use error::*;
+	use buffer::{self, Buffer};
+	use builder::{Builder as Build, Finalization};
+	use icmp::Kind;
+
+	pub struct Builder<B: Buffer = buffer::Dynamic> {
+		buffer:    B,
+		finalizer: Finalization,
+
+		kind: bool,
+	}
+
+	impl<B: Buffer> Build<B> for Builder<B> {
+		fn with(mut buffer: B) -> Result<Self> {
+			buffer.next(20)?;
+
+			Ok(Builder {
+				buffer:    buffer,
+				finalizer: Default::default(),
+
+				kind: false,
+			})
+		}
+
+		fn finalizer(&mut self) -> &mut Finalization {
+			&mut self.finalizer
+		}
+
+		fn build(mut self) -> Result<B::Inner> {
+			if !self.kind {
+				return Err(ErrorKind::InvalidPacket.into());
+			}
+
+			super::prepare(&mut self.finalizer, &self.buffer);
+
+			let mut buffer = self.buffer.into_inner();
+			self.finalizer.finalize(buffer.as_mut())?;
+			Ok(buffer)
+		}
+	}
+
+	impl Default for Builder<buffer::Dynamic> {
+		fn default() -> Self {
+			Builder::with(buffer::Dynamic::default()).unwrap()
+		}
+	}
+
+	impl<B: Buffer> Builder<B> {
+		pub fn request(mut self) -> Result<Self> {
+			self.kind = true;
+			self.buffer.data_mut()[0] = Kind::TimestampRequest.into();
+
+			Ok(self)
+		}
+
+		pub fn reply(mut self) -> Result<Self> {
+			self.kind = true;
+			self.buffer.data_mut()[0] = Kind::TimestampReply.into();
+
+			Ok(self)
+		}
+
+		pub fn identifier(mut self, value: u16) -> Result<Self> {
+			Cursor::new(&mut self.buffer.data_mut()[4 ..])
+				.write_u16::<BigEndian>(value)?;
+
+			Ok(self)
+		}
+
+		pub fn sequence(mut self, value: u16) -> Result<Self> {
+			Cursor::new(&mut self.buffer.data_mut()[6 ..])
+				.write_u16::<BigEndian>(value)?;
+
+			Ok(self)
+		}
+
+		pub fn originate(mut self, value: u32) -> Result<Self> {
+			Cursor::new(&mut self.buffer.data_mut()[8 ..])
+				.write_u32::<BigEndian>(value)?;
+
+			Ok(self)
+		}
+
+		pub fn receive(mut self, value: u32) -> Result<Self> {
+			Cursor::new(&mut self.buffer.data_mut()[12 ..])
+				.write_u32::<BigEndian>(value)?;
+
+			Ok(self)
+		}
+
+		pub fn transmit(mut self, value: u32) -> Result<Self> {
+			Cursor::new(&mut self.buffer.data_mut()[16 ..])
+				.write_u32::<BigEndian>(value)?;
+
+			Ok(self)
+		}
+	}
+}
+
+pub mod information {
+	use std::io::Cursor;
+	use byteorder::{WriteBytesExt, BigEndian};
+
+	use error::*;
+	use buffer::{self, Buffer};
+	use builder::{Builder as Build, Finalization};
+	use icmp::Kind;
+
+	pub struct Builder<B: Buffer = buffer::Dynamic> {
+		buffer:    B,
+		finalizer: Finalization,
+
+		kind: bool,
+	}
+
+	impl<B: Buffer> Build<B> for Builder<B> {
+		fn with(mut buffer: B) -> Result<Self> {
+			buffer.next(8)?;
+
+			Ok(Builder {
+				buffer:    buffer,
+				finalizer: Default::default(),
+
+				kind: false,
+			})
+		}
+
+		fn finalizer(&mut self) -> &mut Finalization {
+			&mut self.finalizer
+		}
+
+		fn build(mut self) -> Result<B::Inner> {
+			if !self.kind {
+				return Err(ErrorKind::InvalidPacket.into());
+			}
+
+			super::prepare(&mut self.finalizer, &self.buffer);
+
+			let mut buffer = self.buffer.into_inner();
+			self.finalizer.finalize(buffer.as_mut())?;
+			Ok(buffer)
+		}
+	}
+
+	impl Default for Builder<buffer::Dynamic> {
+		fn default() -> Self {
+			Builder::with(buffer::Dynamic::default()).unwrap()
+		}
+	}
+
+	impl<B: Buffer> Builder<B> {
+		pub fn request(mut self) -> Result<Self> {
+			self.kind = true;
+			self.buffer.data_mut()[0] = Kind::InformationRequest.into();
+
+			Ok(self)
+		}
+
+		pub fn reply(mut self) -> Result<Self> {
+			self.kind = true;
+			self.buffer.data_mut()[0] = Kind::InformationReply.into();
+
+			Ok(self)
+		}
+
+		pub fn identifier(mut self, value: u16) -> Result<Self> {
+			Cursor::new(&mut self.buffer.data_mut()[4 ..])
+				.write_u16::<BigEndian>(value)?;
+
+			Ok(self)
+		}
+
+		pub fn sequence(mut self, value: u16) -> Result<Self> {
+			Cursor::new(&mut self.buffer.data_mut()[6 ..])
+				.write_u16::<BigEndian>(value)?;
+
+			Ok(self)
+		}
+	}
+}
+
 #[cfg(test)]
 mod test {
 	use builder::Builder;
+	use packet::Packet;
 	use icmp;
 
 	#[test]
-	fn basic() {
+	fn simple() {
 		let packet = icmp::Builder::default()
 			.echo().unwrap().request().unwrap()
 				.identifier(42).unwrap()
@@ -164,6 +376,7 @@ mod test {
 				.payload(b"test").unwrap()
 				.build().unwrap();
 
-		println!("icmp: {:?}", packet);
+		let packet = icmp::Packet::new(packet).unwrap();
+		assert_eq!(packet.kind(), icmp::Kind::EchoRequest);
 	}
 }
