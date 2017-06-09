@@ -25,9 +25,6 @@ use ip::v4::Flags;
 use ip::v4::option;
 use ip::v4::checksum;
 
-use icmp;
-use tcp;
-
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,
@@ -72,6 +69,24 @@ impl Default for Builder<buffer::Dynamic> {
 	fn default() -> Self {
 		Builder::with(buffer::Dynamic::default()).unwrap()
 	}
+}
+
+macro_rules! protocol {
+	($module:ident, $protocol:ident) => (
+		pub fn $module(mut self) -> Result<::$module::Builder<B>> {
+			if self.payload {
+				return Err(ErrorKind::InvalidPacket.into());
+			}
+
+			self = self.protocol(Protocol::$protocol)?;
+			self.prepare();
+
+			let mut builder = ::$module::Builder::with(self.buffer)?;
+			builder.finalizer().extend(self.finalizer.into());
+
+			Ok(builder)
+		}
+	)
 }
 
 impl<B: Buffer> Builder<B> {
@@ -179,33 +194,9 @@ impl<B: Buffer> Builder<B> {
 		});
 	}
 
-	pub fn icmp(mut self) -> Result<icmp::Builder<B>> {
-		if self.payload {
-			return Err(ErrorKind::InvalidPacket.into());
-		}
-
-		self = self.protocol(Protocol::Icmp)?;
-		self.prepare();
-
-		let mut icmp = icmp::Builder::with(self.buffer)?;
-		icmp.finalizer().extend(self.finalizer.into());
-
-		Ok(icmp)
-	}
-
-	pub fn tcp(mut self) -> Result<tcp::Builder<B>> {
-		if self.payload {
-			return Err(ErrorKind::InvalidPacket.into());
-		}
-
-		self = self.protocol(Protocol::Tcp)?;
-		self.prepare();
-
-		let mut tcp = tcp::Builder::with(self.buffer)?;
-		tcp.finalizer().extend(self.finalizer.into());
-
-		Ok(tcp)
-	}
+	protocol!(icmp, Icmp);
+	protocol!(tcp, Tcp);
+	protocol!(udp, Udp);
 }
 
 #[cfg(test)]
