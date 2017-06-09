@@ -22,7 +22,7 @@ Examples
 ========
 Creating an ICMP packet echo request packet.
 
-```
+```rust
 extern crate packet;
 use packet::builder::Builder;
 use packet::icmp;
