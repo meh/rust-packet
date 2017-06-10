@@ -17,7 +17,6 @@ use byteorder::{ReadBytesExt, BigEndian};
 use hwaddr::HwAddr;
 
 use error::*;
-use size;
 use packet::Packet as P;
 use ether::Protocol;
 
@@ -51,11 +50,13 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 
 impl<B: AsRef<[u8]>> Packet<B> {
 	pub fn new(buffer: B) -> Result<Packet<B>> {
+		use size::header::Min;
+
 		let packet = Packet {
 			buffer: buffer,
 		};
 
-		if packet.buffer.as_ref().len() < <Self as size::header::Min>::min() {
+		if packet.buffer.as_ref().len() < Self::min() {
 			return Err(ErrorKind::InvalidPacket.into());
 		}
 
