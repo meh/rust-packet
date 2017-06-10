@@ -51,6 +51,16 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 
 impl<B: AsRef<[u8]>> Packet<B> {
 	pub fn new(buffer: B) -> Result<Packet<B>> {
+		let packet = Packet::no_payload(buffer)?;
+
+		if packet.buffer.as_ref().len() < packet.length() as usize {
+			return Err(ErrorKind::InvalidPacket.into());
+		}
+
+		Ok(packet)
+	}
+
+	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 
 		let packet = Packet {
