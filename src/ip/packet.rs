@@ -46,6 +46,18 @@ impl<'a, B: AsRef<[u8]> + Clone> From<&'a v6::Packet<B>> for Packet<B> {
 	}
 }
 
+impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
+	fn as_ref(&self) -> &[u8] {
+		match *self {
+			Packet::V4(ref packet) =>
+				packet.as_ref(),
+
+			Packet::V6(ref packet) =>
+				packet.as_ref(),
+		}
+	}
+}
+
 impl<B: AsRef<[u8]>> P for Packet<B> {
 	fn header(&self) -> &[u8] {
 		match *self {
