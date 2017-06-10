@@ -76,6 +76,20 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 		Ok(packet)
 	}
+
+	pub fn to_owned(&self) -> Packet<Vec<u8>> {
+		Packet::new(self.buffer.as_ref().to_vec()).unwrap()
+	}
+}
+
+impl<B: AsRef<[u8]>> P for Packet<B> {
+	fn header(&self) -> &[u8] {
+		&self.buffer.as_ref()[.. 8]
+	}
+
+	fn payload(&self) -> &[u8] {
+		&self.buffer.as_ref()[8 ..]
+	}
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
@@ -89,15 +103,5 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 	pub fn packet(&self) -> Result<ip::v4::Packet<&[u8]>> {
 		ip::v4::Packet::new(&self.buffer.as_ref()[8 ..])
-	}
-}
-
-impl<B: AsRef<[u8]>> P for Packet<B> {
-	fn header(&self) -> &[u8] {
-		&self.buffer.as_ref()[.. 8]
-	}
-
-	fn payload(&self) -> &[u8] {
-		&self.buffer.as_ref()[8 ..]
 	}
 }
