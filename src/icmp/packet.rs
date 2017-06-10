@@ -19,7 +19,6 @@ use error::*;
 use packet::Packet as P;
 use icmp::Kind;
 use icmp::checksum;
-use icmp::{echo, timestamp, information, parameter_problem, redirect_message, previous};
 
 pub struct Packet<B> {
 	buffer: B,
@@ -64,6 +63,14 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 }
 
+macro_rules! kind {
+	($module:ident) => (
+		pub fn $module(&self) -> Result<::icmp::$module::Packet<&B>> {
+			::icmp::$module::Packet::new(&self.buffer)
+		}
+	)
+}
+
 impl<B: AsRef<[u8]>> Packet<B> {
 	pub fn kind(&self) -> Kind {
 		Kind::from(self.buffer.as_ref()[0])
@@ -81,29 +88,12 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		checksum(self.buffer.as_ref()) == self.checksum()
 	}
 
-	pub fn echo(&self) -> Result<echo::Packet<&B>> {
-		echo::Packet::new(&self.buffer)
-	}
-
-	pub fn timestamp(&self) -> Result<timestamp::Packet<&B>> {
-		timestamp::Packet::new(&self.buffer)
-	}
-
-	pub fn information(&self) -> Result<information::Packet<&B>> {
-		information::Packet::new(&self.buffer)
-	}
-
-	pub fn parameter_problem(&self) -> Result<parameter_problem::Packet<&B>> {
-		parameter_problem::Packet::new(&self.buffer)
-	}
-
-	pub fn redirect_message(&self) -> Result<redirect_message::Packet<&B>> {
-		redirect_message::Packet::new(&self.buffer)
-	}
-
-	pub fn previous(&self) -> Result<previous::Packet<&B>> {
-		previous::Packet::new(&self.buffer)
-	}
+	kind!(echo);
+	kind!(timestamp);
+	kind!(information);
+	kind!(parameter_problem);
+	kind!(redirect_message);
+	kind!(previous);
 }
 
 impl<B: AsRef<[u8]>> P for Packet<B> {
