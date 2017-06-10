@@ -32,11 +32,9 @@ pub struct Builder<B: Buffer = buffer::Dynamic> {
 
 impl<B: Buffer> Build<B> for Builder<B> {
 	fn with(mut buffer: B) -> Result<Self> {
-		use size::header::Min;
-
 		let ip = (buffer.offset(), buffer.length());
 
-		// Allocate size enough to contain the minimum size of an IPv4 packet.
+		use size::header::Min;
 		buffer.next(Packet::<()>::min())?;
 
 		Ok(Builder {
