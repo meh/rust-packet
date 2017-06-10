@@ -107,10 +107,10 @@ impl<B: Buffer> Builder<B> {
 			Cursor::new(&mut udp[4 ..])
 				.write_u16::<BigEndian>(length as u16)?;
 
-			let checksum: Result<u16> = if let Ok(packet) = ip::v4::Packet::new(&ip) {
+			let checksum: Result<u16> = if let Ok(packet) = ip::v4::Packet::no_payload(&ip) {
 				Ok(checksum(&ip::Packet::from(packet), udp))
 			}
-			else if let Ok(packet) = ip::v6::Packet::new(&ip) {
+			else if let Ok(packet) = ip::v6::Packet::no_payload(&ip) {
 				Ok(checksum(&ip::Packet::from(packet), udp))
 			}
 			else {

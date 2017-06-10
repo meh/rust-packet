@@ -64,6 +64,16 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 
 impl<B: AsRef<[u8]>> Packet<B> {
 	pub fn new(buffer: B) -> Result<Packet<B>> {
+		let packet = Packet::no_payload(buffer)?;
+
+		if packet.buffer.as_ref().len() < packet.length() as usize {
+			return Err(ErrorKind::InvalidPacket.into());
+		}
+
+		Ok(packet)
+	}
+
+	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 
 		let packet = Packet {
@@ -224,15 +234,15 @@ mod test {
 
 	#[test]
 	fn short_packet() {
-		assert!(ip::v4::Packet::new(&[64; 10][..]).is_err());
-		assert!(ip::v4::Packet::new(&[64; 19][..]).is_err());
-		assert!(ip::v4::Packet::new(&[64; 20][..]).is_ok());
+		assert!(ip::v4::Packet::no_payload(&[64; 10][..]).is_err());
+		assert!(ip::v4::Packet::no_payload(&[64; 19][..]).is_err());
+		assert!(ip::v4::Packet::no_payload(&[64; 20][..]).is_ok());
 	}
 
 	#[test]
 	fn values() {
 		let packet = [0x45u8, 0x00, 0x00, 0x34, 0x2d, 0x87, 0x00, 0x00, 0x2c, 0x06, 0x5c, 0x74, 0x42, 0x66, 0x01, 0x6c, 0xc0, 0xa8, 0x00, 0x4f];
-		let packet = ip::v4::Packet::new(&packet[..]).unwrap();
+		let packet = ip::v4::Packet::no_payload(&packet[..]).unwrap();
 
 		assert_eq!(packet.header(), 5);
 		assert_eq!(packet.length(), 52);
@@ -248,7 +258,7 @@ mod test {
 	#[test]
 	fn owned() {
 		let packet: Vec<u8> = vec![0x45, 0x00, 0x00, 0x34, 0x2d, 0x87, 0x00, 0x00, 0x2c, 0x06, 0x5c, 0x74, 0x42, 0x66, 0x01, 0x6c, 0xc0, 0xa8, 0x00, 0x4f];
-		let packet = ip::v4::Packet::new(packet).unwrap();
+		let packet = ip::v4::Packet::no_payload(packet).unwrap();
 
 		assert_eq!(packet.checksum(), 0x5c74);
 		assert!(packet.is_valid());

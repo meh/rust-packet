@@ -51,6 +51,10 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 
 impl<B: AsRef<[u8]>> Packet<B> {
 	pub fn new(buffer: B) -> Result<Packet<B>> {
+		Packet::no_payload(buffer)
+	}
+
+	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
 		let packet = Packet {
 			buffer: buffer,
 		};
