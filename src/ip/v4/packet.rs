@@ -96,7 +96,12 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 	}
 
 	fn payload(&self) -> &[u8] {
-		&self.buffer.as_ref()[self.header() as usize * 4 ..]
+		use size::payload::Size;
+
+		let header  = self.header() as usize * 4;
+		let payload = self.size();
+
+		&self.buffer.as_ref()[header .. header + payload]
 	}
 }
 
