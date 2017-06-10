@@ -23,6 +23,13 @@ pub use self::packet::*;
 pub mod builder;
 pub use self::builder::Builder;
 
+pub mod echo;
+pub mod information;
+pub mod parameter_problem;
+pub mod previous;
+pub mod redirect_message;
+pub mod timestamp;
+
 pub fn checksum(buffer: &[u8]) -> u16 {
 	use std::io::Cursor;
 	use byteorder::{ReadBytesExt, BigEndian};
