@@ -95,6 +95,10 @@ impl<B: Buffer> Builder<B> {
 	}
 
 	pub fn ip(mut self) -> Result<::ip::Builder<B>> {
+		if self.payload {
+			return Err(ErrorKind::InvalidPacket.into());
+		}
+
 		let offset = self.buffer.offset();
 		let length = self.buffer.length();
 
