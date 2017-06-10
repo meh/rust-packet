@@ -51,14 +51,14 @@ impl Default for Builder<buffer::Dynamic> {
 impl<B: Buffer> Builder<B> {
 	pub fn v4(self) -> Result<v4::Builder<B>> {
 		let mut v4 = v4::Builder::with(self.buffer)?;
-		v4.finalizer().extend(self.finalizer.into());
+		v4.finalizer().extend(self.finalizer);
 
 		Ok(v4)
 	}
 
 	pub fn v6(self) -> Result<v6::Builder<B>> {
 		let mut v6 = v6::Builder::with(self.buffer)?;
-		v6.finalizer().extend(self.finalizer.into());
+		v6.finalizer().extend(self.finalizer);
 
 		Ok(v6)
 	}

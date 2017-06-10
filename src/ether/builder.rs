@@ -120,7 +120,7 @@ impl<B: Buffer> Builder<B> {
 		});
 
 		let mut ip = ::ip::Builder::with(self.buffer)?;
-		ip.finalizer().extend(self.finalizer.into());
+		ip.finalizer().extend(self.finalizer);
 
 		Ok(ip)
 	}

@@ -80,7 +80,7 @@ macro_rules! protocol {
 			self.prepare();
 
 			let mut builder = ::$module::Builder::with(self.buffer)?;
-			builder.finalizer().extend(self.finalizer.into());
+			builder.finalizer().extend(self.finalizer);
 
 			Ok(builder)
 		}

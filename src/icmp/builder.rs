@@ -52,14 +52,14 @@ impl Default for Builder<buffer::Dynamic> {
 impl<B: Buffer> Builder<B> {
 	pub fn echo(self) -> Result<echo::Builder<B>> {
 		let mut echo = echo::Builder::with(self.buffer)?;
-		echo.finalizer().extend(self.finalizer.into());
+		echo.finalizer().extend(self.finalizer);
 
 		Ok(echo)
 	}
 
 	pub fn timestamp(self) -> Result<timestamp::Builder<B>> {
 		let mut timestamp = timestamp::Builder::with(self.buffer)?;
-		timestamp.finalizer().extend(self.finalizer.into());
+		timestamp.finalizer().extend(self.finalizer);
 
 		Ok(timestamp)
 	}

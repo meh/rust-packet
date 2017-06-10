@@ -39,8 +39,8 @@ impl Finalization {
 		self.0.push(Box::new(finalizer));
 	}
 
-	pub fn extend(&mut self, finalizers: Vec<Box<Finalizer>>) {
-		self.0.extend(finalizers);
+	pub fn extend<I: IntoIterator<Item = Box<Finalizer>>>(&mut self, finalizers: I) {
+		self.0.extend(finalizers.into_iter());
 	}
 
 	pub fn finalize(self, buffer: &mut [u8]) -> Result<()> {
@@ -49,6 +49,15 @@ impl Finalization {
 		}
 
 		Ok(())
+	}
+}
+
+impl IntoIterator for Finalization {
+	type Item     = Box<Finalizer>;
+	type IntoIter = ::std::vec::IntoIter<Box<Finalizer>>;
+
+	fn into_iter(self) -> ::std::vec::IntoIter<Box<Finalizer>> {
+		self.0.into_iter()
 	}
 }
 
