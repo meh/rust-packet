@@ -12,31 +12,11 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-#[macro_use]
-extern crate error_chain;
-#[macro_use]
-extern crate bitflags;
-extern crate byteorder;
-extern crate hwaddr;
-
-mod error;
-pub use error::*;
-
-#[macro_use]
-pub mod size;
-pub use size::Size;
+mod protocol;
+pub use self::protocol::Protocol;
 
 mod packet;
-pub use packet::Packet;
+pub use self::packet::Packet;
 
-pub mod buffer;
-pub use buffer::Buffer;
-
-pub mod builder;
-pub use builder::Builder;
-
-pub mod ether;
-pub mod ip;
-pub mod icmp;
-pub mod tcp;
-pub mod udp;
+mod builder;
+pub use self::builder::Builder;

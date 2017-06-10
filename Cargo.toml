@@ -13,3 +13,4 @@ keywords    = ["packet", "network", "ip", "tcp", "udp"]
 error-chain = "0.10"
 bitflags    = "0.9"
 byteorder   = "1.0"
+hwaddr      = "0.1"
