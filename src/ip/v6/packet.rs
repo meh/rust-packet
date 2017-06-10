@@ -67,4 +67,12 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 }
 
+impl<B: AsRef<[u8]>> P for Packet<B> {
+	fn header(&self) -> &[u8] {
+		&[]
+	}
 
+	fn payload(&self) -> &[u8] {
+		&[]
+	}
+}
