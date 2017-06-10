@@ -16,6 +16,8 @@ error_chain! {
 	errors {
 		SmallBuffer
 		InvalidPacket
+		InvalidValue
+		AlreadyDefined
 	}
 
 	foreign_links {

@@ -81,7 +81,7 @@ impl<B: Buffer> Builder<B> {
 
 	pub fn payload<'a, T: IntoIterator<Item = &'a u8>>(mut self, value: T) -> Result<Self> {
 		if self.payload {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::AlreadyDefined.into());
 		}
 
 		self.payload = true;
@@ -96,7 +96,7 @@ impl<B: Buffer> Builder<B> {
 
 	pub fn ip(mut self) -> Result<::ip::Builder<B>> {
 		if self.payload {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::AlreadyDefined.into());
 		}
 
 		let offset = self.buffer.offset();

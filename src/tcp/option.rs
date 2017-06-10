@@ -71,11 +71,11 @@ impl<B: AsRef<[u8]>> Option<B> {
 		};
 
 		if option.buffer.as_ref().len() < <Self as size::header::Min>::min() {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::SmallBuffer.into());
 		}
 
 		if option.buffer.as_ref().len() < option.length() as usize {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::SmallBuffer.into());
 		}
 
 		Ok(option)

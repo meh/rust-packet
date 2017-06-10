@@ -54,7 +54,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		let packet = Packet::no_payload(buffer)?;
 
 		if packet.buffer.as_ref().len() < packet.length() as usize {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::SmallBuffer.into());
 		}
 
 		Ok(packet)
@@ -68,7 +68,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		};
 
 		if packet.buffer.as_ref().len() < Self::min() {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::SmallBuffer.into());
 		}
 
 		Ok(packet)

@@ -92,16 +92,18 @@ impl<B: AsRef<[u8]>> fmt::Debug for Option<B> {
 
 impl<B: AsRef<[u8]>> Option<B> {
 	pub fn new(buffer: B) -> Result<Option<B>> {
+		use size::header::Min;
+
 		let option = Option {
 			buffer: buffer,
 		};
 
-		if option.buffer.as_ref().len() < <Self as size::header::Min>::min() {
-			return Err(ErrorKind::InvalidPacket.into());
+		if option.buffer.as_ref().len() < Self::min() {
+			return Err(ErrorKind::SmallBuffer.into());
 		}
 
 		if option.buffer.as_ref().len() < option.length() as usize {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::SmallBuffer.into());
 		}
 
 		Ok(option)

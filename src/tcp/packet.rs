@@ -65,11 +65,11 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		};
 
 		if packet.buffer.as_ref().len() < Self::min() {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::SmallBuffer.into());
 		}
 
 		if packet.buffer.as_ref().len() < packet.offset() as usize * 4 {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::SmallBuffer.into());
 		}
 
 		Ok(packet)

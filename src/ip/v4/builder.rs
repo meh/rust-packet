@@ -73,7 +73,7 @@ macro_rules! protocol {
 	($module:ident, $protocol:ident) => (
 		pub fn $module(mut self) -> Result<::$module::Builder<B>> {
 			if self.payload {
-				return Err(ErrorKind::InvalidPacket.into());
+				return Err(ErrorKind::AlreadyDefined.into());
 			}
 
 			self = self.protocol(Protocol::$protocol)?;
@@ -90,7 +90,7 @@ macro_rules! protocol {
 impl<B: Buffer> Builder<B> {
 	pub fn dscp(mut self, value: u8) -> Result<Self> {
 		if value > 0b11_1111 {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::InvalidValue.into());
 		}
 
 		let old = self.buffer.data()[1];
@@ -101,7 +101,7 @@ impl<B: Buffer> Builder<B> {
 
 	pub fn ecn(mut self, value: u8) -> Result<Self> {
 		if value > 0b11 {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::InvalidValue.into());
 		}
 
 		let old = self.buffer.data()[1];
@@ -157,7 +157,7 @@ impl<B: Buffer> Builder<B> {
 
 	pub fn payload<'a, T: IntoIterator<Item = &'a u8>>(mut self, value: T) -> Result<Self> {
 		if self.payload {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::AlreadyDefined.into());
 		}
 
 		self.payload = true;

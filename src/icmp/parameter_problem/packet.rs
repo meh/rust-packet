@@ -62,7 +62,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		};
 
 		if packet.buffer.as_ref().len() < Self::min() {
-			return Err(ErrorKind::InvalidPacket.into());
+			return Err(ErrorKind::SmallBuffer.into());
 		}
 
 		match Kind::from(packet.buffer.as_ref()[0]) {
