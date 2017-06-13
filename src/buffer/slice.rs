@@ -54,6 +54,10 @@ impl<'a> super::Buffer for Buffer<'a> {
 		self.length  = size;
 		self.used   += size;
 
+		for byte in self.data_mut() {
+			*byte = 0;
+		}
+
 		Ok(())
 	}
 
@@ -63,8 +67,13 @@ impl<'a> super::Buffer for Buffer<'a> {
 		}
 
 		self.offset  = self.used;
-		self.length  = size;
+		self.length += size;
 		self.used   += size;
+
+		let length = self.length;
+		for byte in &mut self.data_mut()[length - size ..] {
+			*byte = 0;
+		}
 
 		Ok(())
 	}
