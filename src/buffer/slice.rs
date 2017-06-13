@@ -43,7 +43,7 @@ impl<'a> super::Buffer for Buffer<'a> {
 	type Inner = &'a mut [u8];
 
 	fn into_inner(self) -> Self::Inner {
-		self.inner
+		&mut self.inner[0 .. self.used]
 	}
 
 	fn next(&mut self, size: usize) -> Result<()> {
