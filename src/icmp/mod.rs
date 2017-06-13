@@ -18,9 +18,9 @@ pub use self::kind::Kind;
 pub mod code;
 
 mod packet;
-pub use self::packet::*;
+pub use self::packet::Packet;
 
-pub mod builder;
+mod builder;
 pub use self::builder::Builder;
 
 pub mod echo;
