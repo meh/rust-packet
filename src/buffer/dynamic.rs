@@ -50,10 +50,9 @@ impl super::Buffer for Buffer {
 	}
 
 	fn more(&mut self, size: usize) -> Result<()> {
-		self.length += size;
-
 		let current = self.inner.len();
 		self.inner.resize(current + size, 0);
+		self.length += size;
 
 		Ok(())
 	}
