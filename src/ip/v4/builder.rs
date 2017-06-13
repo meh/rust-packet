@@ -25,6 +25,7 @@ use ip::v4::Flags;
 use ip::v4::option;
 use ip::v4::checksum;
 
+#[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,

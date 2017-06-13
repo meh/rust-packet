@@ -23,6 +23,7 @@ use tcp::Packet;
 use tcp::Flags;
 use tcp::checksum;
 
+#[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,

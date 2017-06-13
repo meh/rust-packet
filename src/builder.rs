@@ -12,6 +12,8 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+use std::fmt;
+
 use error::*;
 use buffer::Buffer;
 
@@ -31,6 +33,14 @@ pub struct Finalization(Vec<Box<Finalizer>>);
 impl Default for Finalization {
 	fn default() -> Self {
 		Finalization(Vec::new())
+	}
+}
+
+impl fmt::Debug for Finalization {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		f.debug_struct("builder::Finalization")
+			.field("length", &self.0.len())
+			.finish()
 	}
 }
 

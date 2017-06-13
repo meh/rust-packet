@@ -22,6 +22,7 @@ use ip;
 use udp::Packet;
 use udp::checksum;
 
+#[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,

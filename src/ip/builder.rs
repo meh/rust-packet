@@ -20,6 +20,7 @@ use buffer::{self, Buffer};
 use builder::{Builder as Build, Finalization};
 use ip::{v4, v6};
 
+#[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,

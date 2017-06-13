@@ -21,6 +21,7 @@ use builder::{Builder as Build, Finalization};
 use icmp::builder;
 use icmp::Kind;
 
+#[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,

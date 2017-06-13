@@ -22,6 +22,7 @@ use builder::{Builder as Build, Finalization};
 use ether::Packet;
 use ether::Protocol;
 
+#[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,

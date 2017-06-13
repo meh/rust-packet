@@ -21,6 +21,7 @@ use builder::{Builder as Build, Finalization};
 use icmp::checksum;
 use icmp::{echo, timestamp, information};
 
+#[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,
