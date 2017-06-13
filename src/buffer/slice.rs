@@ -17,6 +17,7 @@ use std::ops::{Deref, DerefMut};
 use error::*;
 
 /// A static buffer.
+#[derive(Eq, PartialEq, Debug)]
 pub struct Buffer<'a> {
 	inner: &'a mut [u8],
 
