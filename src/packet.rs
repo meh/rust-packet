@@ -23,6 +23,14 @@ pub trait Packet {
 	fn payload(&self) -> &[u8];
 }
 
+pub trait PacketMut {
+	/// Returns a slice to the packet header.
+	fn header_mut(&mut self) -> &mut [u8];
+
+	/// Returns a slice to the packet payload.
+	fn payload_mut(&mut self) -> &mut [u8];
+}
+
 /// A type convertible to a `Packet`.
 ///
 /// # Example
@@ -54,7 +62,7 @@ pub trait AsPacket<'a, P: Packet + 'a> {
 ///
 /// assert_eq!(packet.destination(), "00:23:69:63:59:be".parse().unwrap());
 /// ```
-pub trait AsPacketMut<'a, P: Packet + 'a> {
+pub trait AsPacketMut<'a, P: PacketMut + 'a> {
 	/// Try converting to a packet.
 	fn as_packet_mut(&'a mut self) -> Result<P>;
 }

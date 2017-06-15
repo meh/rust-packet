@@ -18,7 +18,7 @@ use std::net::Ipv4Addr;
 use byteorder::{ReadBytesExt, BigEndian};
 
 use error::*;
-use packet::{Packet as P, AsPacket, AsPacketMut};
+use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
 use ip::Protocol;
 use ip::v4::Flags;
 use ip::v4::option;
@@ -157,6 +157,22 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 		let payload = self.size();
 
 		&self.buffer.as_ref()[header .. header + payload]
+	}
+}
+
+impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
+	fn header_mut(&mut self) -> &mut [u8] {
+		let header = self.header() as usize * 4;
+		&mut self.buffer.as_mut()[.. header]
+	}
+
+	fn payload_mut(&mut self) -> &mut [u8] {
+		use size::payload::Size;
+
+		let header  = self.header() as usize * 4;
+		let payload = self.size();
+
+		&mut self.buffer.as_mut()[header .. header + payload]
 	}
 }
 

@@ -16,7 +16,7 @@ use std::fmt;
 
 use error::*;
 use size;
-use packet::{Packet as P, AsPacket, AsPacketMut};
+use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
 
 /// IPv4 Option parser.
 pub struct Option<B> {
@@ -214,6 +214,28 @@ impl<B: AsRef<[u8]>> P for Option<B> {
 
 			length =>
 				&self.buffer.as_ref()[2 .. length as usize]
+		}
+	}
+}
+
+impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Option<B> {
+	fn header_mut(&mut self) -> &mut [u8] {
+		match self.length() {
+			1 =>
+				&mut self.buffer.as_mut()[.. 1],
+
+			_ =>
+				&mut self.buffer.as_mut()[.. 2],
+		}
+	}
+
+	fn payload_mut(&mut self) -> &mut [u8] {
+		match self.length() {
+			1 =>
+				&mut [],
+
+			length =>
+				&mut self.buffer.as_mut()[2 .. length as usize]
 		}
 	}
 }

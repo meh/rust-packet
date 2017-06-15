@@ -17,7 +17,7 @@ use std::borrow::ToOwned;
 use byteorder::{ReadBytesExt, BigEndian};
 
 use error::*;
-use packet::{Packet as P, AsPacket, AsPacketMut};
+use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
 use ip;
 use udp::checksum;
 
@@ -136,6 +136,21 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 		let payload = self.size();
 
 		&self.buffer.as_ref()[header .. header + payload]
+	}
+}
+
+impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
+	fn header_mut(&mut self) -> &mut [u8] {
+		&mut self.buffer.as_mut()[.. 8]
+	}
+
+	fn payload_mut(&mut self) -> &mut [u8] {
+		use size::payload::Size;
+
+		let header  = 8;
+		let payload = self.size();
+
+		&mut self.buffer.as_mut()[header .. header + payload]
 	}
 }
 

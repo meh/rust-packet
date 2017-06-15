@@ -18,7 +18,7 @@ use byteorder::{ReadBytesExt, BigEndian};
 use hwaddr::HwAddr;
 
 use error::*;
-use packet::{Packet as P, AsPacket, AsPacketMut};
+use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
 use ether::Protocol;
 
 /// Ethernet frame parser.
@@ -119,6 +119,16 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 
 	fn payload(&self) -> &[u8] {
 		&self.buffer.as_ref()[14 ..]
+	}
+}
+
+impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
+	fn header_mut(&mut self) -> &mut [u8] {
+		&mut self.buffer.as_mut()[.. 14]
+	}
+
+	fn payload_mut(&mut self) -> &mut [u8] {
+		&mut self.buffer.as_mut()[14 ..]
 	}
 }
 

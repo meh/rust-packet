@@ -28,7 +28,7 @@ pub mod size;
 pub use size::Size;
 
 mod packet;
-pub use packet::{Packet, AsPacket, AsPacketMut};
+pub use packet::{Packet, PacketMut, AsPacket, AsPacketMut};
 
 /// Buffer abstractions, dynamic buffers and static buffers.
 pub mod buffer;

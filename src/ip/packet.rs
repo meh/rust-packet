@@ -13,7 +13,7 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use error::*;
-use packet::{Packet as P, AsPacket, AsPacketMut};
+use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
 use size;
 use ip::{v4, v6};
 
@@ -121,6 +121,28 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 
 			Packet::V6(ref packet) =>
 				P::payload(packet),
+		}
+	}
+}
+
+impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
+	fn header_mut(&mut self) -> &mut [u8] {
+		match *self {
+			Packet::V4(ref mut packet) =>
+				PM::header_mut(packet),
+
+			Packet::V6(ref mut packet) =>
+				PM::header_mut(packet),
+		}
+	}
+
+	fn payload_mut(&mut self) -> &mut [u8] {
+		match *self {
+			Packet::V4(ref mut packet) =>
+				PM::payload_mut(packet),
+
+			Packet::V6(ref mut packet) =>
+				PM::payload_mut(packet),
 		}
 	}
 }
