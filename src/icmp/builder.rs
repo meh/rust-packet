@@ -60,6 +60,14 @@ impl<B: Buffer> Builder<B> {
 		Ok(echo)
 	}
 
+	/// Create an Information Request/Reply packet.
+	pub fn information(self) -> Result<information::Builder<B>> {
+		let mut information = information::Builder::with(self.buffer)?;
+		information.finalizer().extend(self.finalizer);
+
+		Ok(information)
+	}
+
 	/// Create a Timestamp Request/Reply packet.
 	pub fn timestamp(self) -> Result<timestamp::Builder<B>> {
 		let mut timestamp = timestamp::Builder::with(self.buffer)?;
