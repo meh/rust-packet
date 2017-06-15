@@ -16,7 +16,7 @@ use std::fmt;
 use byteorder::{ReadBytesExt, BigEndian};
 
 use error::*;
-use packet::Packet as P;
+use packet::{Packet as P, AsPacket};
 use icmp::Kind;
 
 /// Information Request/Reply packet parser.
@@ -89,6 +89,12 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 		use size::Size;
 
 		&self.buffer.as_ref()[.. self.size()]
+	}
+}
+
+impl<'a, B: AsRef<[u8]>> AsPacket<'a, Packet<&'a [u8]>> for B {
+	fn as_packet(&self) -> Result<Packet<&[u8]>> {
+		Packet::new(self.as_ref())
 	}
 }
 

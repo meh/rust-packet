@@ -62,6 +62,12 @@ impl Default for Builder<buffer::Dynamic> {
 	}
 }
 
+impl<'a, B: Buffer> AsPacket<'a, Packet<&'a [u8]>> for Builder<B> {
+	fn as_packet(&self) -> Result<Packet<&[u8]>> {
+		Packet::new(self.buffer.data())
+	}
+}
+
 impl<B: Buffer> Builder<B> {
 	/// MAC address for the destination.
 	pub fn destination(mut self, value: HwAddr) -> Result<Self> {

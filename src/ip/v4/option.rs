@@ -16,7 +16,7 @@ use std::fmt;
 
 use error::*;
 use size;
-use packet::Packet as P;
+use packet::{Packet as P, AsPacket};
 
 /// IPv4 Option parser.
 pub struct Option<B> {
@@ -172,6 +172,12 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Option<B> {
 		use size::Size;
 
 		&self.buffer.as_ref()[.. self.size()]
+	}
+}
+
+impl<'a, B: AsRef<[u8]>> AsPacket<'a, Option<&'a [u8]>> for B {
+	fn as_packet(&self) -> Result<Option<&[u8]>> {
+		Option::new(self.as_ref())
 	}
 }
 

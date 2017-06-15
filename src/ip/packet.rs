@@ -12,7 +12,8 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-use packet::Packet as P;
+use error::*;
+use packet::{Packet as P, AsPacket};
 use size;
 use ip::{v4, v6};
 
@@ -58,6 +59,20 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 
 			Packet::V6(ref packet) =>
 				packet.as_ref(),
+		}
+	}
+}
+
+impl<'a, B: AsRef<[u8]>> AsPacket<'a, Packet<&'a [u8]>> for B {
+	fn as_packet(&self) -> Result<Packet<&[u8]>> {
+		if let Ok(packet) = v4::Packet::new(self.as_ref()) {
+			Ok(Packet::V4(packet))
+		}
+		else if let Ok(packet) = v6::Packet::new(self.as_ref()) {
+			Ok(Packet::V6(packet))
+		}
+		else {
+			Err(ErrorKind::InvalidPacket.into())
 		}
 	}
 }

@@ -18,8 +18,10 @@ use byteorder::{WriteBytesExt, BigEndian};
 use error::*;
 use buffer::{self, Buffer};
 use builder::{Builder as Build, Finalization};
+use packet::AsPacket;
 use icmp::builder;
 use icmp::Kind;
+use icmp::echo::Packet;
 
 /// Echo Request/Reply packet builder.
 #[derive(Debug)]
@@ -64,6 +66,12 @@ impl<B: Buffer> Build<B> for Builder<B> {
 impl Default for Builder<buffer::Dynamic> {
 	fn default() -> Self {
 		Builder::with(buffer::Dynamic::default()).unwrap()
+	}
+}
+
+impl<'a, B: Buffer> AsPacket<'a, Packet<&'a [u8]>> for Builder<B> {
+	fn as_packet(&self) -> Result<Packet<&[u8]>> {
+		Packet::new(self.buffer.data())
 	}
 }
 
