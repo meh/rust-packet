@@ -14,7 +14,8 @@
 
 use std::fmt;
 use std::borrow::ToOwned;
-use byteorder::{ReadBytesExt, BigEndian};
+use std::io::Cursor;
+use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 use hwaddr::HwAddr;
 
 use error::*;
@@ -23,7 +24,7 @@ use ether::Protocol;
 
 /// Ethernet frame parser.
 pub struct Packet<B> {
-	buffer: B,
+	pub(crate) buffer: B,
 }
 
 sized!(Packet,
@@ -146,6 +147,27 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	/// Protocol of the inner packet.
 	pub fn protocol(&self) -> Protocol {
 		(&self.buffer.as_ref()[12 ..]).read_u16::<BigEndian>().unwrap().into()
+	}
+}
+
+impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
+	pub fn set_destination(&mut self, value: HwAddr) -> Result<&mut Self> {
+		self.buffer.as_mut()[0 .. 6].copy_from_slice(&value.octets());
+
+		Ok(self)
+	}
+
+	pub fn set_source(&mut self, value: HwAddr) -> Result<&mut Self> {
+		self.buffer.as_mut()[6 .. 12].copy_from_slice(&value.octets());
+
+		Ok(self)
+	}
+
+	pub fn set_protocol(&mut self, value: Protocol) -> Result<&mut Self> {
+		Cursor::new(&mut self.buffer.as_mut()[12 ..])
+			.write_u16::<BigEndian>(value.into())?;
+
+		Ok(self)
 	}
 }
 

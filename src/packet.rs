@@ -54,13 +54,15 @@ pub trait AsPacket<'a, P: Packet + 'a> {
 /// # Example
 ///
 /// ```
-/// use packet::AsPacket;
+/// use packet::AsPacketMut;
 /// use packet::ether;
 ///
-/// let bytes  = [0x00u8, 0x23, 0x69, 0x63, 0x59, 0xbe, 0xe4, 0xb3, 0x18, 0x26, 0x63, 0xa3, 0x08, 0x00];
-/// let packet: ether::Packet<_> = bytes.as_packet().unwrap();
+/// let mut bytes = [0x00u8, 0x23, 0x69, 0x63, 0x59, 0xbe, 0xe4, 0xb3, 0x18, 0x26, 0x63, 0xa3, 0x08, 0x00];
+/// let mut packet: ether::Packet<_> = bytes.as_packet_mut().unwrap();
 ///
 /// assert_eq!(packet.destination(), "00:23:69:63:59:be".parse().unwrap());
+/// packet.set_destination("00:23:42:63:00:be".parse().unwrap());
+/// assert_eq!(packet.destination(), "00:23:42:63:00:be".parse().unwrap());
 /// ```
 pub trait AsPacketMut<'a, P: PacketMut + 'a> {
 	/// Try converting to a packet.
