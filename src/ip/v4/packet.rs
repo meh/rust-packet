@@ -13,6 +13,7 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use std::fmt;
+use std::borrow::ToOwned;
 use std::net::Ipv4Addr;
 use byteorder::{ReadBytesExt, BigEndian};
 
@@ -97,15 +98,21 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 		Ok(packet)
 	}
+}
 
+impl<B: ToOwned> Packet<B>
+	where B::Owned: AsRef<[u8]>
+{
 	/// Convert the packet to its owned version.
 	///
 	/// # Notes
 	///
 	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
 	/// implements `Clone` and the impl would conflict.
-	pub fn to_owned(&self) -> Packet<Vec<u8>> {
-		Packet::new(self.buffer.as_ref().to_vec()).unwrap()
+	pub fn to_owned(&self) -> Packet<B::Owned> {
+		Packet {
+			buffer: self.buffer.to_owned()
+		}
 	}
 }
 
