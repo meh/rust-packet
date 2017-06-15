@@ -18,6 +18,7 @@ use error::*;
 use size;
 use packet::Packet as P;
 
+/// TCP option parser.
 pub struct Option<B> {
 	buffer: B,
 }
@@ -41,16 +42,31 @@ sized!(Option,
 		},
 	});
 
+/// TCP option number.
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Number {
+	///
 	End,
+
+	///
 	NoOperation,
+
+	///
 	MaximumSegmentSize,
+
+	///
 	WindowScale,
+
+	///
 	SelectiveAcknowledgmentPermitted,
+
+	///
 	SelectiveAcknowledgment,
+
+	///
 	Timestamp,
 
+	///
 	Unknown(u8),
 }
 
@@ -65,6 +81,7 @@ impl<B: AsRef<[u8]>> fmt::Debug for Option<B> {
 }
 
 impl<B: AsRef<[u8]>> Option<B> {
+	/// Parse a TCP option, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Option<B>> {
 		let option = Option {
 			buffer: buffer,
@@ -82,20 +99,11 @@ impl<B: AsRef<[u8]>> Option<B> {
 	}
 }
 
-impl<B: AsRef<[u8]>> Option<B> {
-	pub fn number(&self) -> Number {
-		self.buffer.as_ref()[0].into()
-	}
+impl<B: AsRef<[u8]>> AsRef<[u8]> for Option<B> {
+	fn as_ref(&self) -> &[u8] {
+		use size::Size;
 
-	pub fn length(&self) -> u8 {
-		match self.number() {
-			Number::End |
-			Number::NoOperation =>
-				1,
-
-			_ =>
-				self.buffer.as_ref()[1]
-		}
+		&self.buffer.as_ref()[.. self.size()]
 	}
 }
 
@@ -117,6 +125,25 @@ impl<B: AsRef<[u8]>> P for Option<B> {
 
 			length =>
 				&self.buffer.as_ref()[2 .. length as usize]
+		}
+	}
+}
+
+impl<B: AsRef<[u8]>> Option<B> {
+	/// Option number.
+	pub fn number(&self) -> Number {
+		self.buffer.as_ref()[0].into()
+	}
+
+	/// Option length.
+	pub fn length(&self) -> u8 {
+		match self.number() {
+			Number::End |
+			Number::NoOperation =>
+				1,
+
+			_ =>
+				self.buffer.as_ref()[1]
 		}
 	}
 }

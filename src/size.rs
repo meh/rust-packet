@@ -12,6 +12,84 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+/// Sizes for the header part of a packet.
+pub mod header {
+	/// Minimum size of a packet header.
+	pub trait Min {
+		/// Get the minimum size.
+		fn min() -> usize;
+	}
+
+	/// Maximum size of a packet header.
+	pub trait Max {
+		/// Get the maximum size.
+		fn max() -> usize;
+	}
+
+	/// Actual size of the packet header.
+	pub trait Size {
+		/// Get the actual size.
+		fn size(&self) -> usize;
+	}
+}
+
+/// Sizes for the payload part of a packet.
+pub mod payload {
+	/// Minimum size of a packet payload.
+	pub trait Min {
+		/// Get the minimum size.
+		fn min() -> usize;
+	}
+
+	/// Maximum size of a packet payload.
+	pub trait Max {
+		/// Get the maximum size.
+		fn max() -> usize;
+	}
+
+	/// Actual size of the packet payload.
+	pub trait Size {
+		/// Get the actual size.
+		fn size(&self) -> usize;
+	}
+}
+
+/// Minimum size of a packet.
+pub trait Min {
+	/// Get the minimum size.
+	fn min() -> usize;
+}
+
+/// Maximum size of a packet.
+pub trait Max {
+	/// Get the maximum size.
+	fn max() -> usize;
+}
+
+/// Actual size of the packet.
+pub trait Size {
+	/// Get the actual size.
+	fn size(&self) -> usize;
+}
+
+impl<T: header::Min + payload::Min> Min for T {
+	fn min() -> usize {
+		<Self as header::Min>::min() + <Self as payload::Min>::min()
+	}
+}
+
+impl<T: header::Max + payload::Max> Max for T {
+	fn max() -> usize {
+		<Self as header::Max>::max() + <Self as payload::Max>::max()
+	}
+}
+
+impl<T: header::Size + payload::Size> Size for T {
+	fn size(&self) -> usize {
+		<Self as header::Size>::size(self) + <Self as payload::Size>::size(self)
+	}
+}
+
 macro_rules! sized {
 	()                             => ();
 	($name:ident, )                => ();
@@ -62,71 +140,4 @@ macro_rules! sized {
 
 		sized!($name => $part; $($rest)*);
 	);
-}
-
-pub mod header {
-	/// The minimum size of a packet header.
-	pub trait Min {
-		fn min() -> usize;
-	}
-
-	/// The maximum size of a packet header.
-	pub trait Max {
-		fn max() -> usize;
-	}
-
-	/// The actual size of the packet header.
-	pub trait Size {
-		fn size(&self) -> usize;
-	}
-}
-
-pub mod payload {
-	/// The minimum size of a packet payload.
-	pub trait Min {
-		fn min() -> usize;
-	}
-
-	/// The maximum size of a packet payload.
-	pub trait Max {
-		fn max() -> usize;
-	}
-
-	/// The actual size of the packet payload.
-	pub trait Size {
-		fn size(&self) -> usize;
-	}
-}
-
-/// The minimum size of a packet.
-pub trait Min {
-	fn min() -> usize;
-}
-
-/// The maximum size of a packet.
-pub trait Max {
-	fn max() -> usize;
-}
-
-/// The actual size of the packet.
-pub trait Size {
-	fn size(&self) -> usize;
-}
-
-impl<T: header::Min + payload::Min> Min for T {
-	fn min() -> usize {
-		<Self as header::Min>::min() + <Self as payload::Min>::min()
-	}
-}
-
-impl<T: header::Max + payload::Max> Max for T {
-	fn max() -> usize {
-		<Self as header::Max>::max() + <Self as payload::Max>::max()
-	}
-}
-
-impl<T: header::Size + payload::Size> Size for T {
-	fn size(&self) -> usize {
-		<Self as header::Size>::size(self) + <Self as payload::Size>::size(self)
-	}
 }

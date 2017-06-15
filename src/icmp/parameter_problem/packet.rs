@@ -20,6 +20,7 @@ use size;
 use ip;
 use icmp::Kind;
 
+/// Parameter Problem packet parser.
 pub struct Packet<B> {
 	buffer: B,
 }
@@ -54,6 +55,8 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Parse a Parameter Problem packet, checking the buffer contents
+	/// are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 
@@ -76,6 +79,12 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		Ok(packet)
 	}
 
+	/// Convert the packet to its owned version.
+	///
+	/// # Notes
+	///
+	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
+	/// implements `Clone` and the impl would conflict.
 	pub fn to_owned(&self) -> Packet<Vec<u8>> {
 		Packet::new(self.buffer.as_ref().to_vec()).unwrap()
 	}
@@ -100,10 +109,12 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Pointer to the packet area that caused the problem.
 	pub fn pointer(&self) -> u8 {
 		self.buffer.as_ref()[4]
 	}
 
+	/// The packet that caused the problem.
 	pub fn packet(&self) -> Result<ip::v4::Packet<&[u8]>> {
 		ip::v4::Packet::new(&self.buffer.as_ref()[8 ..])
 	}

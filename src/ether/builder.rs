@@ -19,9 +19,11 @@ use hwaddr::HwAddr;
 use error::*;
 use buffer::{self, Buffer};
 use builder::{Builder as Build, Finalization};
+use packet::AsPacket;
 use ether::Packet;
 use ether::Protocol;
 
+/// Ethernet frame builder.
 #[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
@@ -61,18 +63,21 @@ impl Default for Builder<buffer::Dynamic> {
 }
 
 impl<B: Buffer> Builder<B> {
+	/// MAC address for the destination.
 	pub fn destination(mut self, value: HwAddr) -> Result<Self> {
 		self.buffer.data_mut()[0 .. 6].copy_from_slice(&value.octets());
 
 		Ok(self)
 	}
 
+	/// MAC address for the source.
 	pub fn source(mut self, value: HwAddr) -> Result<Self> {
 		self.buffer.data_mut()[6 .. 12].copy_from_slice(&value.octets());
 
 		Ok(self)
 	}
 
+	/// Protocol of the inner packet.
 	pub fn protocol(mut self, value: Protocol) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[12 ..])
 			.write_u16::<BigEndian>(value.into())?;
@@ -80,6 +85,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Payload for the frame.
 	pub fn payload<'a, T: IntoIterator<Item = &'a u8>>(mut self, value: T) -> Result<Self> {
 		if self.payload {
 			return Err(ErrorKind::AlreadyDefined.into());
@@ -95,6 +101,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Build an IP packet inside the Ethernet frame.
 	pub fn ip(mut self) -> Result<::ip::Builder<B>> {
 		if self.payload {
 			return Err(ErrorKind::AlreadyDefined.into());

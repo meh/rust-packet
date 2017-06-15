@@ -12,9 +12,11 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+/// IPv4 flags.
 pub mod flag;
 pub use self::flag::Flags;
 
+/// IPv4 option parser and builder.
 pub mod option;
 pub use self::option::Option;
 
@@ -24,6 +26,7 @@ pub use self::packet::Packet;
 mod builder;
 pub use self::builder::Builder;
 
+/// Calculate the checksum for an IPv4 packet.
 pub fn checksum(buffer: &[u8]) -> u16 {
 	use std::io::Cursor;
 	use byteorder::{ReadBytesExt, BigEndian};

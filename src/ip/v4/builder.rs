@@ -25,6 +25,7 @@ use ip::v4::Flags;
 use ip::v4::option;
 use ip::v4::checksum;
 
+/// IPv4 packet builder.
 #[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
@@ -71,7 +72,8 @@ impl Default for Builder<buffer::Dynamic> {
 }
 
 macro_rules! protocol {
-	($module:ident, $protocol:ident) => (
+	($(#[$attr:meta])* fn $module:ident($protocol:ident)) => (
+		$(#[$attr])*
 		pub fn $module(mut self) -> Result<::$module::Builder<B>> {
 			if self.payload {
 				return Err(ErrorKind::AlreadyDefined.into());
@@ -89,6 +91,7 @@ macro_rules! protocol {
 }
 
 impl<B: Buffer> Builder<B> {
+	/// Differentiated Services Code Point.
 	pub fn dscp(mut self, value: u8) -> Result<Self> {
 		if value > 0b11_1111 {
 			return Err(ErrorKind::InvalidValue.into());
@@ -100,6 +103,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Explicit Congestion Notification.
 	pub fn ecn(mut self, value: u8) -> Result<Self> {
 		if value > 0b11 {
 			return Err(ErrorKind::InvalidValue.into());
@@ -111,6 +115,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Packet ID.
 	pub fn id(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[4 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -118,6 +123,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Packet flags.
 	pub fn flags(mut self, value: Flags) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[6 ..])
 			.write_u16::<BigEndian>(value.bits())?;
@@ -125,6 +131,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Packet fragment offset.
 	pub fn offset(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[6 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -132,30 +139,35 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Time to Live.
 	pub fn ttl(mut self, value: u8) -> Result<Self> {
 		self.buffer.data_mut()[8] = value;
 
 		Ok(self)
 	}
 
+	/// Source address.
 	pub fn source(mut self, value: Ipv4Addr) -> Result<Self> {
 		self.buffer.data_mut()[12 .. 16].copy_from_slice(&value.octets());
 
 		Ok(self)
 	}
 
+	/// Destination address.
 	pub fn destination(mut self, value: Ipv4Addr) -> Result<Self> {
 		self.buffer.data_mut()[16 .. 20].copy_from_slice(&value.octets());
 
 		Ok(self)
 	}
 
+	/// Inner protocol.
 	pub fn protocol(mut self, value: Protocol) -> Result<Self> {
 		self.buffer.data_mut()[9] = value.into();
 
 		Ok(self)
 	}
 
+	/// Payload for the packet.
 	pub fn payload<'a, T: IntoIterator<Item = &'a u8>>(mut self, value: T) -> Result<Self> {
 		if self.payload {
 			return Err(ErrorKind::AlreadyDefined.into());
@@ -193,9 +205,14 @@ impl<B: Buffer> Builder<B> {
 		});
 	}
 
-	protocol!(icmp, Icmp);
-	protocol!(tcp, Tcp);
-	protocol!(udp, Udp);
+	protocol!(/// Build an ICMP packet.
+		fn icmp(Icmp));
+
+	protocol!(/// Build a TCP packet.
+		fn tcp(Tcp));
+
+	protocol!(/// Build a UDP packet.
+		fn udp(Udp));
 }
 
 #[cfg(test)]
@@ -221,7 +238,7 @@ mod test {
 					.build().unwrap();
 
 		let packet = ip::v4::Packet::new(packet).unwrap();
-		
+
 		assert_eq!(packet.id(), 0x2d87);
 		assert!(packet.flags().is_empty());
 		assert_eq!(packet.length(), 32);

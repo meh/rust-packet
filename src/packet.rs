@@ -12,11 +12,11 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-/// Represents a packet.
+/// A network packet.
 pub trait Packet {
 	/// Returns a slice to the packet header.
 	fn header(&self) -> &[u8];
 
-	/// Returns a slice to the payload part of the packet.
+	/// Returns a slice to the packet payload.
 	fn payload(&self) -> &[u8];
 }

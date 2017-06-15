@@ -21,6 +21,7 @@ use builder::{Builder as Build, Finalization};
 use icmp::checksum;
 use icmp::{echo, timestamp, information};
 
+/// ICMP packet builder.
 #[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
@@ -51,6 +52,7 @@ impl Default for Builder<buffer::Dynamic> {
 }
 
 impl<B: Buffer> Builder<B> {
+	/// Build an Echo Request/Reply packet.
 	pub fn echo(self) -> Result<echo::Builder<B>> {
 		let mut echo = echo::Builder::with(self.buffer)?;
 		echo.finalizer().extend(self.finalizer);
@@ -58,6 +60,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(echo)
 	}
 
+	/// Create a Timestamp Request/Reply packet.
 	pub fn timestamp(self) -> Result<timestamp::Builder<B>> {
 		let mut timestamp = timestamp::Builder::with(self.buffer)?;
 		timestamp.finalizer().extend(self.finalizer);

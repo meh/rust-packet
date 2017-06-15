@@ -21,6 +21,7 @@ use size;
 use ip;
 use icmp::Kind;
 
+/// Redirect Message packet parser.
 pub struct Packet<B> {
 	buffer: B,
 }
@@ -55,6 +56,7 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Parse a Redirect Message, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 
@@ -77,6 +79,12 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		Ok(packet)
 	}
 
+	/// Convert the packet to its owned version.
+	///
+	/// # Notes
+	///
+	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
+	/// implements `Clone` and the impl would conflict.
 	pub fn to_owned(&self) -> Packet<Vec<u8>> {
 		Packet::new(self.buffer.as_ref().to_vec()).unwrap()
 	}
@@ -101,6 +109,7 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Gateway to redirect the packet to.
 	pub fn gateway(&self) -> Ipv4Addr {
 		Ipv4Addr::new(
 			self.buffer.as_ref()[4],
@@ -109,6 +118,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 			self.buffer.as_ref()[7])
 	}
 
+	/// Packet to redirect.
 	pub fn packet(&self) -> Result<ip::v4::Packet<&[u8]>> {
 		ip::v4::Packet::new(&self.buffer.as_ref()[8 ..])
 	}

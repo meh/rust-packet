@@ -22,6 +22,7 @@ use ip;
 use udp::Packet;
 use udp::checksum;
 
+/// UDP packet builder.
 #[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
@@ -67,6 +68,7 @@ impl Default for Builder<buffer::Dynamic> {
 }
 
 impl<B: Buffer> Builder<B> {
+	/// Source port.
 	pub fn source(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[0 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -74,6 +76,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Destination port.
 	pub fn destination(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[2 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -81,6 +84,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Payload for the packet.
 	pub fn payload<'a, T: IntoIterator<Item = &'a u8>>(mut self, value: T) -> Result<Self> {
 		if self.payload {
 			return Err(ErrorKind::AlreadyDefined.into());

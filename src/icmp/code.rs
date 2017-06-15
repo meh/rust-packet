@@ -12,41 +12,93 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+/// Codes for Destination Unreachable packets.
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum DestinationUnreachable {
+	///
 	DestinationNetworkUnreachable,
+
+	///
 	DestinationHostUnreachable,
+
+	///
 	DestinationProtocolUnreachable,
+
+	///
 	DestinationPortUnreachable,
+
+	///
 	FragmentationRequired,
+
+	///
 	SourceRouteFailed,
+
+	///
 	DestinationNetworkUnknown,
+
+	///
 	DestinationHostUnknown,
+
+	///
 	SourceHostIsolated,
+
+	///
 	NetworkAdministrativelyProhibited,
+
+	///
 	HostAdministrativelyProhibited,
+
+	///
 	NetworkUnreachableForTos,
+
+	///
 	HostUnreachableForTos,
+
+	///
 	CommunicationAdministrativelyProhibited,
+
+	///
 	HostPrecedenceViolation,
+
+	///
 	PrecedentCutoffInEffect,
+
+	///
 	Unknown(u8),
 }
 
+/// Codes for Redirect Message packets.
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum RedirectMessage {
+	///
 	RedirectDatagramForNetwork,
+
+	///
 	RedirectDatagramForHost,
+
+	///
 	RedirectDatagramForTosAndNetwork,
+
+	///
 	RedirectDatagramForTosAndHost,
+
+	///
 	Unknown(u8),
 }
 
+/// Codes for Parameter Problem packets.
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum ParameterProblem {
+	///
 	PointerIndicatesError,
+
+	///
 	MissingRequiredData,
+
+	///
 	BadLength,
+
+	///
 	Unknown(u8),
 }
 

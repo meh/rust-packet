@@ -23,6 +23,7 @@ use tcp::Packet;
 use tcp::Flags;
 use tcp::checksum;
 
+/// TCP packet builder.
 #[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
@@ -70,6 +71,7 @@ impl Default for Builder<buffer::Dynamic> {
 }
 
 impl<B: Buffer> Builder<B> {
+	/// Source port.
 	pub fn source(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[0 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -77,6 +79,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Destination port.
 	pub fn destination(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[2 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -84,6 +87,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Packet sequence.
 	pub fn sequence(mut self, value: u32) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[4 ..])
 			.write_u32::<BigEndian>(value)?;
@@ -91,6 +95,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Optional acknowledgment.
 	pub fn acknowledgment(mut self, value: u32) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[8 ..])
 			.write_u32::<BigEndian>(value)?;
@@ -98,6 +103,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Data offset.
 	pub fn offset(mut self, value: u8) -> Result<Self> {
 		if value > 0b1111 {
 			return Err(ErrorKind::InvalidValue.into());
@@ -109,6 +115,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Packet flags.
 	pub fn flags(mut self, value: Flags) -> Result<Self> {
 		let old = self.buffer.data()[12] & 0b1111_0000;
 
@@ -120,6 +127,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Packet window.
 	pub fn window(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[14 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -127,6 +135,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Urgent pointer.
 	pub fn pointer(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[18 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -134,6 +143,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Payload for the packet.
 	pub fn payload<'a, T: IntoIterator<Item = &'a u8>>(mut self, value: T) -> Result<Self> {
 		if self.payload {
 			return Err(ErrorKind::AlreadyDefined.into());

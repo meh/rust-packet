@@ -12,24 +12,58 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+/// ICMP packet types.
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Kind {
+	///
 	EchoReply,
+
+	///
 	DestinationUnreachable,
+
+	///
 	SourceQuench,
+
+	///
 	RedirectMessage,
+
+	///
 	EchoRequest,
+
+	///
 	RouterAdvertisement,
+
+	///
 	RouterSolicitation,
+
+	///
 	TimeExceeded,
+
+	///
 	ParameterProblem,
+
+	///
 	TimestampRequest,
+
+	///
 	TimestampReply,
+
+	///
 	InformationRequest,
+
+	///
 	InformationReply,
+
+	///
 	AddressMaskRequest,
+
+	///
 	AddressMaskReply,
+
+	///
 	TraceRoute,
+
+	///
 	Unknown(u8),
 }
 

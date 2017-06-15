@@ -19,6 +19,7 @@ use error::*;
 use packet::Packet as P;
 use icmp::Kind;
 
+/// Echo Request/Reply packet parser.
 pub struct Packet<B> {
 	buffer: B,
 }
@@ -47,6 +48,8 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Parse an Echo Request/Reply packet, checking the buffer contents are
+	/// correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 
@@ -70,6 +73,12 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		Ok(packet)
 	}
 
+	/// Convert the packet to its owned version.
+	///
+	/// # Notes
+	///
+	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
+	/// implements `Clone` and the impl would conflict.
 	pub fn to_owned(&self) -> Packet<Vec<u8>> {
 		Packet::new(self.buffer.as_ref().to_vec()).unwrap()
 	}
@@ -94,18 +103,22 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Check if it's a Request packet.
 	pub fn is_request(&self) -> bool {
 		Kind::from(self.buffer.as_ref()[0]) == Kind::EchoRequest
 	}
 
+	/// Check if it's a Reply packet.
 	pub fn is_reply(&self) -> bool {
 		Kind::from(self.buffer.as_ref()[0]) == Kind::EchoReply
 	}
 
+	/// Packet identifier.
 	pub fn identifier(&self) -> u16 {
 		(&self.buffer.as_ref()[4 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
+	/// Packet sequence.
 	pub fn sequence(&self) -> u16 {
 		(&self.buffer.as_ref()[6 ..]).read_u16::<BigEndian>().unwrap()
 	}

@@ -20,6 +20,7 @@ use error::*;
 use packet::Packet as P;
 use ether::Protocol;
 
+/// Ethernet frame parser.
 pub struct Packet<B> {
 	buffer: B,
 }
@@ -49,6 +50,7 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Parse an Ethernet frame, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 
@@ -63,6 +65,12 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		Ok(packet)
 	}
 
+	/// Convert the packet to its owned version.
+	///
+	/// # Notes
+	///
+	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
+	/// implements `Clone` and the impl would conflict.
 	pub fn to_owned(&self) -> Packet<Vec<u8>> {
 		Packet::new(self.buffer.as_ref().to_vec()).unwrap()
 	}
@@ -87,14 +95,17 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// MAC address for the destination.
 	pub fn destination(&self) -> HwAddr {
 		self.buffer.as_ref()[0 .. 6].into()
 	}
 
+	/// MAC address for the source.
 	pub fn source(&self) -> HwAddr {
 		self.buffer.as_ref()[6 .. 12].into()
 	}
 
+	/// Protocol of the inner packet.
 	pub fn protocol(&self) -> Protocol {
 		(&self.buffer.as_ref()[12 ..]).read_u16::<BigEndian>().unwrap().into()
 	}
@@ -117,7 +128,7 @@ mod test {
 
 		assert!(ip.is_valid());
 		assert!(udp.is_valid(&ip::Packet::from(&ip)));
-		
+
 		assert_eq!(ether.destination(), "00:23:69:63:59:be".parse().unwrap());
 		assert_eq!(ether.source(), "e4:b3:18:26:63:a3".parse().unwrap());
 		assert_eq!(ether.protocol(), ether::Protocol::Ipv4);

@@ -21,6 +21,12 @@ pub use self::builder::Builder;
 use ip;
 use ip::Protocol;
 
+/// Calculate the checksum for a UDP packet.
+///
+/// # Note
+///
+/// Since the checksum for UDP packets includes a pseudo-header based on the
+/// enclosing IP packet, one has to be given.
 pub fn checksum<B: AsRef<[u8]>>(ip: &ip::Packet<B>, buffer: &[u8]) -> u16 {
 	use std::io::Cursor;
 	use byteorder::{WriteBytesExt, ReadBytesExt, BigEndian};

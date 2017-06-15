@@ -20,6 +20,7 @@ use packet::Packet as P;
 use ip;
 use udp::checksum;
 
+/// UDP packet parser.
 pub struct Packet<B> {
 	buffer: B,
 }
@@ -50,6 +51,7 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Parse a UDP packet, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
 		let packet = Packet::no_payload(buffer)?;
 
@@ -60,6 +62,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		Ok(packet)
 	}
 
+	/// Parse a UDP packet without checking the payload.
 	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 
@@ -74,6 +77,12 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		Ok(packet)
 	}
 
+	/// Convert the packet to its owned version.
+	///
+	/// # Notes
+	///
+	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
+	/// implements `Clone` and the impl would conflict.
 	pub fn to_owned(&self) -> Packet<Vec<u8>> {
 		Packet::new(self.buffer.as_ref().to_vec()).unwrap()
 	}
@@ -103,22 +112,27 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Source port.
 	pub fn source(&self) -> u16 {
 		(&self.buffer.as_ref()[0 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
+	/// Destination port.
 	pub fn destination(&self) -> u16 {
 		(&self.buffer.as_ref()[2 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
+	/// Total length of the packet.
 	pub fn length(&self) -> u16 {
 		(&self.buffer.as_ref()[4 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
+	/// Checksum of the packet.
 	pub fn checksum(&self) -> u16 {
 		(&self.buffer.as_ref()[6 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
+	/// Verify the packet is valid by calculating the checksum.
 	pub fn is_valid<I: AsRef<[u8]>>(&self, ip: &ip::Packet<I>) -> bool {
 		checksum(ip, self.buffer.as_ref()) == self.checksum()
 	}

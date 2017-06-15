@@ -19,6 +19,7 @@ use error::*;
 use buffer::{self, Buffer};
 use builder::{Builder as Build, Finalization};
 
+/// IPv6 packet builder.
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,

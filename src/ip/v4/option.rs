@@ -18,6 +18,7 @@ use error::*;
 use size;
 use packet::Packet as P;
 
+/// IPv4 Option parser.
 pub struct Option<B> {
 	buffer: B,
 }
@@ -41,40 +42,95 @@ sized!(Option,
 		},
 	});
 
+/// IPv4 Option class.
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Class {
+	///
 	Control,
+
+	///
 	Debugging,
+
+	///
 	Reserved(u8),
 }
 
+/// IPv4 Option number.
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Number {
+	///
 	End,
+
+	///
 	NoOperation,
+
+	///
 	Security,
+
+	///
 	LooseSourceRoute,
+
+	///
 	TimeStamp,
+
+	///
 	ExtendedSecurity,
+
+	///
 	CommercialSecurity,
+
+	///
 	RecordRoute,
+
+	///
 	StreamId,
+
+	///
 	StrictSourceRoute,
+
+	///
 	ExperimentalMeasurement,
+
+	///
 	MtuProbe,
+
+	///
 	MtuReply,
+
+	///
 	ExperimentalFlowControl,
+
+	///
 	ExperimentalAccessControl,
+
+	///
 	ImiTrafficDescriptor,
+
+	///
 	ExtendedInternetProtocol,
+
+	///
 	TraceRoute,
+
+	///
 	AddressExtension,
+
+	///
 	RouterAlert,
+
+	///
 	SelectiveDirectedBroadcast,
+
+	///
 	DynamicPacketState,
+
+	///
 	UpstreamMulticastPacket,
+
+	///
 	QuickStart,
 
+	///
 	Unknown(u8),
 }
 
@@ -91,6 +147,7 @@ impl<B: AsRef<[u8]>> fmt::Debug for Option<B> {
 }
 
 impl<B: AsRef<[u8]>> Option<B> {
+	/// Parse an IPv4 option, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Option<B>> {
 		use size::header::Min;
 
@@ -110,32 +167,11 @@ impl<B: AsRef<[u8]>> Option<B> {
 	}
 }
 
-impl<B: AsRef<[u8]>> Option<B> {
-	pub fn is_copied(&self) -> bool {
-		self.buffer.as_ref()[0] >> 7 == 1
-	}
+impl<B: AsRef<[u8]>> AsRef<[u8]> for Option<B> {
+	fn as_ref(&self) -> &[u8] {
+		use size::Size;
 
-	pub fn class(&self) -> Class {
-		match ((self.buffer.as_ref()[0] >> 5) & 0b011).into() {
-			0 => Class::Control,
-			2 => Class::Debugging,
-			v => Class::Reserved(v),
-		}
-	}
-
-	pub fn number(&self) -> Number {
-		(self.buffer.as_ref()[0] & 0b11111).into()
-	}
-
-	pub fn length(&self) -> u8 {
-		match self.number() {
-			Number::End |
-			Number::NoOperation =>
-				1,
-
-			_ =>
-				self.buffer.as_ref()[1]
-		}
+		&self.buffer.as_ref()[.. self.size()]
 	}
 }
 
@@ -157,6 +193,39 @@ impl<B: AsRef<[u8]>> P for Option<B> {
 
 			length =>
 				&self.buffer.as_ref()[2 .. length as usize]
+		}
+	}
+}
+
+impl<B: AsRef<[u8]>> Option<B> {
+	/// Whether the option has to be copied in fragments.
+	pub fn is_copied(&self) -> bool {
+		self.buffer.as_ref()[0] >> 7 == 1
+	}
+
+	/// Option class.
+	pub fn class(&self) -> Class {
+		match ((self.buffer.as_ref()[0] >> 5) & 0b011).into() {
+			0 => Class::Control,
+			2 => Class::Debugging,
+			v => Class::Reserved(v),
+		}
+	}
+
+	/// Option number.
+	pub fn number(&self) -> Number {
+		(self.buffer.as_ref()[0] & 0b11111).into()
+	}
+
+	/// Packet length
+	pub fn length(&self) -> u8 {
+		match self.number() {
+			Number::End |
+			Number::NoOperation =>
+				1,
+
+			_ =>
+				self.buffer.as_ref()[1]
 		}
 	}
 }

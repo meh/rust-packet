@@ -24,6 +24,7 @@ use ip::v4::Flags;
 use ip::v4::option;
 use ip::v4::checksum;
 
+/// IPv6 packet parser.
 #[derive(Clone)]
 pub struct Packet<B> {
 	buffer: B,
@@ -50,10 +51,12 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Parse an IPv6 packet, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
 		Packet::no_payload(buffer)
 	}
 
+	/// Parse an IPv6 packet without checking the payload.
 	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 

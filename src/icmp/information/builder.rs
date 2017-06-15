@@ -21,6 +21,7 @@ use builder::{Builder as Build, Finalization};
 use icmp::builder;
 use icmp::Kind;
 
+/// Information Request/Reply packet builder.
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,
@@ -64,6 +65,7 @@ impl Default for Builder<buffer::Dynamic> {
 }
 
 impl<B: Buffer> Builder<B> {
+	/// Make it a request.
 	pub fn request(mut self) -> Result<Self> {
 		self.kind = true;
 		self.buffer.data_mut()[0] = Kind::InformationRequest.into();
@@ -71,6 +73,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Make it a reply.
 	pub fn reply(mut self) -> Result<Self> {
 		self.kind = true;
 		self.buffer.data_mut()[0] = Kind::InformationReply.into();
@@ -78,6 +81,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Packet identifier.
 	pub fn identifier(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[4 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -85,6 +89,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Packet sequence.
 	pub fn sequence(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[6 ..])
 			.write_u16::<BigEndian>(value)?;

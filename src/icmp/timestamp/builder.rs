@@ -21,6 +21,7 @@ use builder::{Builder as Build, Finalization};
 use icmp::builder;
 use icmp::Kind;
 
+/// Information Request/Reply builder.
 #[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
@@ -65,6 +66,7 @@ impl Default for Builder<buffer::Dynamic> {
 }
 
 impl<B: Buffer> Builder<B> {
+	/// Make it a request.
 	pub fn request(mut self) -> Result<Self> {
 		self.kind = true;
 		self.buffer.data_mut()[0] = Kind::TimestampRequest.into();
@@ -72,6 +74,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Make it a reply.
 	pub fn reply(mut self) -> Result<Self> {
 		self.kind = true;
 		self.buffer.data_mut()[0] = Kind::TimestampReply.into();
@@ -79,6 +82,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Packet identifier.
 	pub fn identifier(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[4 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -86,6 +90,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Packet sequence.
 	pub fn sequence(mut self, value: u16) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[6 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -93,6 +98,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Creation timestamp.
 	pub fn originate(mut self, value: u32) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[8 ..])
 			.write_u32::<BigEndian>(value)?;
@@ -100,6 +106,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Reception timestamp.
 	pub fn receive(mut self, value: u32) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[12 ..])
 			.write_u32::<BigEndian>(value)?;
@@ -107,6 +114,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(self)
 	}
 
+	/// Transmission timestamp.
 	pub fn transmit(mut self, value: u32) -> Result<Self> {
 		Cursor::new(&mut self.buffer.data_mut()[16 ..])
 			.write_u32::<BigEndian>(value)?;

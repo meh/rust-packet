@@ -14,10 +14,17 @@
 
 error_chain! {
 	errors {
-		SmallBuffer
-		InvalidPacket
-		InvalidValue
-		AlreadyDefined
+		/// The buffer is too small.
+		SmallBuffer { }
+
+		/// The packet is invalid.
+		InvalidPacket { }
+
+		/// The value is invalid for the field.
+		InvalidValue { }
+
+		/// The value has already been defined.
+		AlreadyDefined { }
 	}
 
 	foreign_links {

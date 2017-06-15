@@ -23,6 +23,7 @@ use ip::v4::Flags;
 use ip::v4::option;
 use ip::v4::checksum;
 
+/// IPv4 packet parser.
 #[derive(Copy, Clone)]
 pub struct Packet<B> {
 	buffer: B,
@@ -63,6 +64,7 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Parse an IPv4 packet, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
 		let packet = Packet::no_payload(buffer)?;
 
@@ -73,6 +75,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		Ok(packet)
 	}
 
+	/// Parse an IPv4 packet without checking the payload.
 	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 
@@ -95,6 +98,12 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		Ok(packet)
 	}
 
+	/// Convert the packet to its owned version.
+	///
+	/// # Notes
+	///
+	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
+	/// implements `Clone` and the impl would conflict.
 	pub fn to_owned(&self) -> Packet<Vec<u8>> {
 		Packet::new(self.buffer.as_ref().to_vec()).unwrap()
 	}
@@ -124,55 +133,68 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// IP protocol version, will always be 4.
 	pub fn version(&self) -> u8 {
 		self.buffer.as_ref()[0] >> 4
 	}
 
+	/// Length of the IPv4 header in 32 bit words.
 	pub fn header(&self) -> u8 {
 		self.buffer.as_ref()[0] & 0b1111
 	}
 
+	/// DSCP value.
 	pub fn dscp(&self) -> u8 {
 		self.buffer.as_ref()[1] >> 2
 	}
 
+	/// ECN value.
 	pub fn ecn(&self) -> u8 {
 		self.buffer.as_ref()[1] & 0b11
 	}
 
+	/// Total length of the packet in octets.
 	pub fn length(&self) -> u16 {
 		(&self.buffer.as_ref()[2 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
+	/// ID of the packet.
 	pub fn id(&self) -> u16 {
 		(&self.buffer.as_ref()[4 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
+	/// Flags of the packet.
 	pub fn flags(&self) -> Flags {
 		Flags::from_bits((&self.buffer.as_ref()[6 ..])
 			.read_u16::<BigEndian>().unwrap() >> 13).unwrap()
 	}
 
+	/// Offset of the packet.
 	pub fn offset(&self) -> u16 {
 		(&self.buffer.as_ref()[6 ..]).read_u16::<BigEndian>().unwrap() & 0x1fff
 	}
 
+	/// Time to Live for the packet.
 	pub fn ttl(&self) -> u8 {
 		self.buffer.as_ref()[8]
 	}
 
+	/// Protocol of the inner packet.
 	pub fn protocol(&self) -> Protocol {
 		self.buffer.as_ref()[9].into()
 	}
 
+	/// Checksum of the packet.
 	pub fn checksum(&self) -> u16 {
 		(&self.buffer.as_ref()[10 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
+	/// Verify the packet is valid by calculating the checksum.
 	pub fn is_valid(&self) -> bool {
 		checksum(P::header(self)) == self.checksum()
 	}
 
+	/// Source IP address.
 	pub fn source(&self) -> Ipv4Addr {
 		Ipv4Addr::new(
 			self.buffer.as_ref()[12],
@@ -181,6 +203,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 			self.buffer.as_ref()[15])
 	}
 
+	/// Destination IP address.
 	pub fn destination(&self) -> Ipv4Addr {
 		Ipv4Addr::new(
 			self.buffer.as_ref()[16],
@@ -189,6 +212,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 			self.buffer.as_ref()[19])
 	}
 
+	/// IP options for the packet.
 	pub fn options(&self) -> OptionIter {
 		OptionIter {
 			buffer: &self.buffer.as_ref()[20 .. (self.header() as usize * 4)],
@@ -196,6 +220,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 }
 
+/// Iterator over IP packet options.
 pub struct OptionIter<'a> {
 	buffer: &'a [u8],
 }
@@ -209,7 +234,7 @@ impl<'a> Iterator for OptionIter<'a> {
 		if self.buffer.is_empty() {
 			return None;
 		}
-		
+
 		match option::Option::new(self.buffer) {
 			Ok(option) => {
 				if option.number() == option::Number::End {

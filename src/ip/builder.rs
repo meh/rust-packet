@@ -20,6 +20,7 @@ use buffer::{self, Buffer};
 use builder::{Builder as Build, Finalization};
 use ip::{v4, v6};
 
+/// Generic IP packet builder.
 #[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
@@ -50,6 +51,7 @@ impl Default for Builder<buffer::Dynamic> {
 }
 
 impl<B: Buffer> Builder<B> {
+	/// Create an IPv4 packet.
 	pub fn v4(self) -> Result<v4::Builder<B>> {
 		let mut v4 = v4::Builder::with(self.buffer)?;
 		v4.finalizer().extend(self.finalizer);
@@ -57,6 +59,7 @@ impl<B: Buffer> Builder<B> {
 		Ok(v4)
 	}
 
+	/// Create an IPv6 packet.
 	pub fn v6(self) -> Result<v6::Builder<B>> {
 		let mut v6 = v6::Builder::with(self.buffer)?;
 		v6.finalizer().extend(self.finalizer);

@@ -12,31 +12,79 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+/// Protocols supported by Ethernet frames.
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Protocol {
+	///
 	Ipv4,
+
+	///
 	Arp,
+
+	///
 	WakeOnLan,
+
+	///
 	Trill,
+
+	///
 	DecNet,
+
+	///
 	Rarp,
+
+	///
 	AppleTalk,
+
+	///
 	Aarp,
+
+	///
 	Ipx,
+
+	///
 	Qnx,
+
+	///
 	Ipv6,
+
+	///
 	FlowControl,
+
+	///
 	CobraNet,
+
+	///
 	Mpls,
+
+	///
 	MplsMulticast,
+
+	///
 	PppoeDiscovery,
+
+	///
 	PppoeSession,
+
+	///
 	Vlan,
+
+	///
 	PBridge,
+
+	///
 	Lldp,
+
+	///
 	Ptp,
+
+	///
 	Cfm,
+
+	///
 	QinQ,
+
+	///
 	Unknown(u16),
 }
 

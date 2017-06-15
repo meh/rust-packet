@@ -20,6 +20,7 @@ use packet::Packet as P;
 use icmp::Kind;
 use icmp::checksum;
 
+/// ICMP packet parser.
 pub struct Packet<B> {
 	buffer: B,
 }
@@ -48,6 +49,7 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Parse an ICMP packet, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 
@@ -62,6 +64,12 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		Ok(packet)
 	}
 
+	/// Convert the packet to its owned version.
+	///
+	/// # Notes
+	///
+	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
+	/// implements `Clone` and the impl would conflict.
 	pub fn to_owned(&self) -> Packet<Vec<u8>> {
 		Packet::new(self.buffer.as_ref().to_vec()).unwrap()
 	}
@@ -86,7 +94,8 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 }
 
 macro_rules! kind {
-	($module:ident) => (
+	($(#[$attr:meta])* fn $module:ident) => (
+		$(#[$attr])*
 		pub fn $module(&self) -> Result<::icmp::$module::Packet<&B>> {
 			::icmp::$module::Packet::new(&self.buffer)
 		}
@@ -94,26 +103,41 @@ macro_rules! kind {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Packet type.
 	pub fn kind(&self) -> Kind {
 		Kind::from(self.buffer.as_ref()[0])
 	}
 
+	/// Packet code.
 	pub fn code(&self) -> u8 {
 		self.buffer.as_ref()[1]
 	}
 
+	/// Packet checksum.
 	pub fn checksum(&self) -> u16 {
 		(&self.buffer.as_ref()[2 ..]).read_u16::<BigEndian>().unwrap()
 	}
 
+	/// Verify the packet is valid by calculating the checksum.
 	pub fn is_valid(&self) -> bool {
 		checksum(self.buffer.as_ref()) == self.checksum()
 	}
 
-	kind!(echo);
-	kind!(timestamp);
-	kind!(information);
-	kind!(parameter_problem);
-	kind!(redirect_message);
-	kind!(previous);
+	kind!(/// Parse an Echo Request/Reply packet.
+		fn echo);
+
+	kind!(/// Parse a Timestamp Request/Reply packet.
+		fn timestamp);
+
+	kind!(/// Parse an Information Request/Reply packet.
+		fn information);
+
+	kind!(/// Parse a Parameter Problem packet.
+		fn parameter_problem);
+
+	kind!(/// Parse a Redirect Message packet.
+		fn redirect_message);
+
+	kind!(/// Parse a Source Quench, Destination Unreachable or Time Exceeded packet.
+		fn previous);
 }

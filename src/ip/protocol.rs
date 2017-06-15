@@ -12,153 +12,445 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+/// Protocols supported by IP packets.
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Protocol {
+	///
 	Hopopt,
+
+	///
 	Icmp,
+
+	///
 	Igmp,
+
+	///
 	Ggp,
+
+	///
 	Ipv4,
+
+	///
 	St,
+
+	///
 	Tcp,
+
+	///
 	Cbt,
+
+	///
 	Egp,
+
+	///
 	Igp,
+
+	///
 	BbnRccMon,
+
+	///
 	NvpII,
+
+	///
 	Pup,
+
+	///
 	Argus,
+
+	///
 	Emcon,
+
+	///
 	Xnet,
+
+	///
 	Chaos,
+
+	///
 	Udp,
+
+	///
 	Mux,
+
+	///
 	DcnMeas,
+
+	///
 	Hmp,
+
+	///
 	Prm,
+
+	///
 	XnsIdp,
+
+	///
 	Trunk1,
+
+	///
 	Trunk2,
+
+	///
 	Leaf1,
+
+	///
 	Leaf2,
+
+	///
 	Rdp,
+
+	///
 	Irtp,
+
+	///
 	IsoTp4,
+
+	///
 	Netblt,
+
+	///
 	MfeNsp,
+
+	///
 	MeritInp,
+
+	///
 	Dccp,
+
+	///
 	ThreePc,
+
+	///
 	Idpr,
+
+	///
 	Xtp,
+
+	///
 	Ddp,
+
+	///
 	IdprCmtp,
+
+	///
 	TpPlusPlus,
+
+	///
 	Il,
+
+	///
 	Ipv6,
+
+	///
 	Sdrp,
+
+	///
 	Ipv6Route,
+
+	///
 	Ipv6Frag,
+
+	///
 	Idrp,
+
+	///
 	Rsvp,
+
+	///
 	Gre,
+
+	///
 	Dsr,
+
+	///
 	Bna,
+
+	///
 	Esp,
+
+	///
 	Ah,
+
+	///
 	INlsp,
+
+	///
 	Swipe,
+
+	///
 	Narp,
+
+	///
 	Mobile,
+
+	///
 	Tlsp,
+
+	///
 	Skip,
+
+	///
 	Ipv6Icmp,
+
+	///
 	Ipv6NoNxt,
+
+	///
 	Ipv6Opts,
+
+	///
 	HostInternal,
+
+	///
 	Cftp,
+
+	///
 	LocalNetwork,
+
+	///
 	SatExpak,
+
+	///
 	Kryptolan,
+
+	///
 	Rvd,
+
+	///
 	Ippc,
+
+	///
 	DistributedFs,
+
+	///
 	SatMon,
+
+	///
 	Visa,
+
+	///
 	Ipcv,
+
+	///
 	Cpnx,
+
+	///
 	Cphb,
+
+	///
 	Wsn,
+
+	///
 	Pvp,
+
+	///
 	BrSatMon,
+
+	///
 	SunNd,
+
+	///
 	WbMon,
+
+	///
 	WbExpak,
+
+	///
 	IsoIp,
+
+	///
 	Vmtp,
+
+	///
 	SecureVmtp,
+
+	///
 	Vines,
+
+	///
 	TtpOrIptm,
+
+	///
 	NsfnetIgp,
+
+	///
 	Dgp,
+
+	///
 	Tcf,
+
+	///
 	Eigrp,
+
+	///
 	OspfigP,
+
+	///
 	SpriteRpc,
+
+	///
 	Larp,
+
+	///
 	Mtp,
+
+	///
 	Ax25,
+
+	///
 	IpIp,
+
+	///
 	Micp,
+
+	///
 	SccSp,
+
+	///
 	Etherip,
+
+	///
 	Encap,
+
+	///
 	PrivEncryption,
+
+	///
 	Gmtp,
+
+	///
 	Ifmp,
+
+	///
 	Pnni,
+
+	///
 	Pim,
+
+	///
 	Aris,
+
+	///
 	Scps,
+
+	///
 	Qnx,
+
+	///
 	AN,
+
+	///
 	IpComp,
+
+	///
 	Snp,
+
+	///
 	CompaqPeer,
+
+	///
 	IpxInIp,
+
+	///
 	Vrrp,
+
+	///
 	Pgm,
+
+	///
 	ZeroHop,
+
+	///
 	L2tp,
+
+	///
 	Ddx,
+
+	///
 	Iatp,
+
+	///
 	Stp,
+
+	///
 	Srp,
+
+	///
 	Uti,
+
+	///
 	Smp,
+
+	///
 	Sm,
+
+	///
 	Ptp,
+
+	///
 	IsisOverIpv4,
+
+	///
 	Fire,
+
+	///
 	Crtp,
+
+	///
 	Crudp,
+
+	///
 	Sscopmce,
+
+	///
 	Iplt,
+
+	///
 	Sps,
+
+	///
 	Pipe,
+
+	///
 	Sctp,
+
+	///
 	Fc,
+
+	///
 	RsvpE2eIgnore,
+
+	///
 	MobilityHeader,
+
+	///
 	UdpLite,
+
+	///
 	MplsInIp,
+
+	///
 	Manet,
+
+	///
 	Hip,
+
+	///
 	Shim6,
+
+	///
 	Wesp,
+
+	///
 	Rohc,
+
+	///
 	Test1,
+
+	///
 	Test2,
+
+	///
 	Unknown(u8),
 }
 
