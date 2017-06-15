@@ -19,7 +19,7 @@ use hwaddr::HwAddr;
 use error::*;
 use buffer::{self, Buffer};
 use builder::{Builder as Build, Finalization};
-use packet::AsPacket;
+use packet::{AsPacket, AsPacketMut};
 use ether::Packet;
 use ether::Protocol;
 
@@ -67,6 +67,14 @@ impl<'a, B: Buffer> AsPacket<'a, Packet<&'a [u8]>> for Builder<B> {
 		Packet::new(self.buffer.data())
 	}
 }
+
+impl<'a, B: Buffer> AsPacketMut<'a, Packet<&'a mut [u8]>> for Builder<B> {
+	fn as_packet_mut(&mut self) -> Result<Packet<&mut [u8]>> {
+		Packet::new(self.buffer.data_mut())
+	}
+}
+
+
 
 impl<B: Buffer> Builder<B> {
 	/// MAC address for the destination.

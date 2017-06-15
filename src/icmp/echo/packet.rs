@@ -17,7 +17,7 @@ use std::borrow::ToOwned;
 use byteorder::{ReadBytesExt, BigEndian};
 
 use error::*;
-use packet::{Packet as P, AsPacket};
+use packet::{Packet as P, AsPacket, AsPacketMut};
 use icmp::Kind;
 
 /// Echo Request/Reply packet parser.
@@ -99,9 +99,24 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 	}
 }
 
+impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Packet<B> {
+	fn as_mut(&mut self) -> &mut [u8] {
+		use size::Size;
+
+		let size = self.size();
+		&mut self.buffer.as_mut()[.. size]
+	}
+}
+
 impl<'a, B: AsRef<[u8]>> AsPacket<'a, Packet<&'a [u8]>> for B {
 	fn as_packet(&self) -> Result<Packet<&[u8]>> {
 		Packet::new(self.as_ref())
+	}
+}
+
+impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for B {
+	fn as_packet_mut(&mut self) -> Result<Packet<&mut [u8]>> {
+		Packet::new(self.as_mut())
 	}
 }
 

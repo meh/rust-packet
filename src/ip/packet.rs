@@ -13,7 +13,7 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use error::*;
-use packet::{Packet as P, AsPacket};
+use packet::{Packet as P, AsPacket, AsPacketMut};
 use size;
 use ip::{v4, v6};
 
@@ -63,17 +63,43 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 	}
 }
 
+impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Packet<B> {
+	fn as_mut(&mut self) -> &mut [u8] {
+		match *self {
+			Packet::V4(ref mut packet) =>
+				packet.as_mut(),
+
+			Packet::V6(ref mut packet) =>
+				packet.as_mut(),
+		}
+	}
+}
+
 impl<'a, B: AsRef<[u8]>> AsPacket<'a, Packet<&'a [u8]>> for B {
 	fn as_packet(&self) -> Result<Packet<&[u8]>> {
 		if let Ok(packet) = v4::Packet::new(self.as_ref()) {
-			Ok(Packet::V4(packet))
+			return Ok(Packet::V4(packet));
 		}
-		else if let Ok(packet) = v6::Packet::new(self.as_ref()) {
-			Ok(Packet::V6(packet))
+
+		if let Ok(packet) = v6::Packet::new(self.as_ref()) {
+			return Ok(Packet::V6(packet));
 		}
-		else {
-			Err(ErrorKind::InvalidPacket.into())
+
+		Err(ErrorKind::InvalidPacket.into())
+	}
+}
+
+impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for B {
+	fn as_packet_mut(&mut self) -> Result<Packet<&mut [u8]>> {
+		if v4::Packet::new(self.as_ref()).is_ok() {
+			return Ok(Packet::V4(v4::Packet::new(self.as_mut()).unwrap()));
 		}
+
+		if v6::Packet::new(self.as_ref()).is_ok() {
+			return Ok(Packet::V6(v6::Packet::new(self.as_mut()).unwrap()));
+		}
+
+		Err(ErrorKind::InvalidPacket.into())
 	}
 }
 

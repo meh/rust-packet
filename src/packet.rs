@@ -40,3 +40,21 @@ pub trait AsPacket<'a, P: Packet + 'a> {
 	/// Try converting to a packet.
 	fn as_packet(&'a self) -> Result<P>;
 }
+
+/// A type convertible to a `Packet`.
+///
+/// # Example
+///
+/// ```
+/// use packet::AsPacket;
+/// use packet::ether;
+///
+/// let bytes  = [0x00u8, 0x23, 0x69, 0x63, 0x59, 0xbe, 0xe4, 0xb3, 0x18, 0x26, 0x63, 0xa3, 0x08, 0x00];
+/// let packet: ether::Packet<_> = bytes.as_packet().unwrap();
+///
+/// assert_eq!(packet.destination(), "00:23:69:63:59:be".parse().unwrap());
+/// ```
+pub trait AsPacketMut<'a, P: Packet + 'a> {
+	/// Try converting to a packet.
+	fn as_packet_mut(&'a mut self) -> Result<P>;
+}

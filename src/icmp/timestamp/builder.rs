@@ -18,7 +18,7 @@ use byteorder::{WriteBytesExt, BigEndian};
 use error::*;
 use buffer::{self, Buffer};
 use builder::{Builder as Build, Finalization};
-use packet::AsPacket;
+use packet::{AsPacket, AsPacketMut};
 use icmp::builder;
 use icmp::Kind;
 use icmp::timestamp::Packet;
@@ -70,6 +70,12 @@ impl Default for Builder<buffer::Dynamic> {
 impl<'a, B: Buffer> AsPacket<'a, Packet<&'a [u8]>> for Builder<B> {
 	fn as_packet(&self) -> Result<Packet<&[u8]>> {
 		Packet::new(self.buffer.data())
+	}
+}
+
+impl<'a, B: Buffer> AsPacketMut<'a, Packet<&'a mut [u8]>> for Builder<B> {
+	fn as_packet_mut(&mut self) -> Result<Packet<&mut [u8]>> {
+		Packet::new(self.buffer.data_mut())
 	}
 }
 
