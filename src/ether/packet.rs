@@ -13,7 +13,6 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use std::fmt;
-use std::borrow::ToOwned;
 use std::io::Cursor;
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 use hwaddr::HwAddr;
@@ -68,18 +67,16 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 }
 
-impl<B: ToOwned> Packet<B>
-	where B::Owned: AsRef<[u8]>
-{
+impl<B: AsRef<[u8]>> Packet<B> {
 	/// Convert the packet to its owned version.
 	///
 	/// # Notes
 	///
 	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
 	/// implements `Clone` and the impl would conflict.
-	pub fn to_owned(&self) -> Packet<B::Owned> {
+	pub fn to_owned(&self) -> Packet<Vec<u8>> {
 		Packet {
-			buffer: self.buffer.to_owned()
+			buffer: self.buffer.as_ref().to_vec(),
 		}
 	}
 }

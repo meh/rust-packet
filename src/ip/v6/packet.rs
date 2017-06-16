@@ -76,6 +76,20 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 }
 
+impl<B: AsRef<[u8]>> Packet<B> {
+	/// Convert the packet to its owned version.
+	///
+	/// # Notes
+	///
+	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
+	/// implements `Clone` and the impl would conflict.
+	pub fn to_owned(&self) -> Packet<Vec<u8>> {
+		Packet {
+			buffer: self.buffer.as_ref().to_vec(),
+		}
+	}
+}
+
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 	fn as_ref(&self) -> &[u8] {
 		&[]

@@ -51,6 +51,24 @@ impl<'a, B: AsRef<[u8]> + Clone> From<&'a v6::Packet<B>> for Packet<B> {
 	}
 }
 
+impl<B: AsRef<[u8]>> Packet<B> {
+	/// Convert the packet to its owned version.
+	///
+	/// # Notes
+	///
+	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
+	/// implements `Clone` and the impl would conflict.
+	pub fn to_owned(&self) -> Packet<Vec<u8>> {
+		match *self {
+			Packet::V4(ref packet) =>
+				Packet::V4(packet.to_owned()),
+
+			Packet::V6(ref packet) =>
+				Packet::V6(packet.to_owned()),
+		}
+	}
+}
+
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 	fn as_ref(&self) -> &[u8] {
 		match *self {
