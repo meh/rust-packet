@@ -13,7 +13,6 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use error::*;
-use packet::Packet;
 
 /// A buffer to build packets in.
 ///

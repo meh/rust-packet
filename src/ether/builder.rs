@@ -49,7 +49,7 @@ impl<B: Buffer> Build<B> for Builder<B> {
 		&mut self.finalizer
 	}
 
-	fn build(mut self) -> Result<B::Inner> {
+	fn build(self) -> Result<B::Inner> {
 		let mut buffer = self.buffer.into_inner();
 		self.finalizer.finalize(buffer.as_mut())?;
 		Ok(buffer)
@@ -73,8 +73,6 @@ impl<'a, B: Buffer> AsPacketMut<'a, Packet<&'a mut [u8]>> for Builder<B> {
 		Packet::new(self.buffer.data_mut())
 	}
 }
-
-
 
 impl<B: Buffer> Builder<B> {
 	/// MAC address for the destination.
