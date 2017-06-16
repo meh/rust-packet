@@ -115,21 +115,13 @@ impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for
 }
 
 impl<B: AsRef<[u8]>> P for Packet<B> {
-	fn header(&self) -> &[u8] {
-		&[]
-	}
-
-	fn payload(&self) -> &[u8] {
-		&[]
+	fn split(&self) -> (&[u8], &[u8]) {
+		(&[], &[])
 	}
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
-	fn header_mut(&mut self) -> &mut [u8] {
-		&mut []
-	}
-
-	fn payload_mut(&mut self) -> &mut [u8] {
-		&mut []
+	fn split_mut(&mut self) -> (&mut [u8], &mut [u8]) {
+		(&mut [], &mut [])
 	}
 }

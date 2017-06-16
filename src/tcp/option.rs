@@ -129,45 +129,25 @@ impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Option<&'a mut [u8]>> for
 }
 
 impl<B: AsRef<[u8]>> P for Option<B> {
-	fn header(&self) -> &[u8] {
+	fn split(&self) -> (&[u8], &[u8]) {
 		match self.length() {
 			1 =>
-				&self.buffer.as_ref()[.. 1],
-
-			_ =>
-				&self.buffer.as_ref()[.. 2],
-		}
-	}
-
-	fn payload(&self) -> &[u8] {
-		match self.length() {
-			1 =>
-				&[],
+				self.buffer.as_ref().split_at(1),
 
 			length =>
-				&self.buffer.as_ref()[2 .. length as usize]
+				self.buffer.as_ref()[.. length as usize].split_at(2),
 		}
 	}
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Option<B> {
-	fn header_mut(&mut self) -> &mut [u8] {
+	fn split_mut(&mut self) -> (&mut [u8], &mut [u8]) {
 		match self.length() {
 			1 =>
-				&mut self.buffer.as_mut()[.. 1],
-
-			_ =>
-				&mut self.buffer.as_mut()[.. 2],
-		}
-	}
-
-	fn payload_mut(&mut self) -> &mut [u8] {
-		match self.length() {
-			1 =>
-				&mut [],
+				self.buffer.as_mut().split_at_mut(1),
 
 			length =>
-				&mut self.buffer.as_mut()[2 .. length as usize]
+				self.buffer.as_mut()[.. length as usize].split_at_mut(2),
 		}
 	}
 }

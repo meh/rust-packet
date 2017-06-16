@@ -122,45 +122,25 @@ impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for
 }
 
 impl<B: AsRef<[u8]>> P for Packet<B> {
-	fn header(&self) -> &[u8] {
+	fn split(&self) -> (&[u8], &[u8]) {
 		match *self {
 			Packet::V4(ref packet) =>
-				P::header(packet),
+				packet.split(),
 
 			Packet::V6(ref packet) =>
-				P::header(packet),
-		}
-	}
-
-	fn payload(&self) -> &[u8] {
-		match *self {
-			Packet::V4(ref packet) =>
-				P::payload(packet),
-
-			Packet::V6(ref packet) =>
-				P::payload(packet),
+				packet.split(),
 		}
 	}
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
-	fn header_mut(&mut self) -> &mut [u8] {
+	fn split_mut(&mut self) -> (&mut [u8], &mut [u8]) {
 		match *self {
 			Packet::V4(ref mut packet) =>
-				PM::header_mut(packet),
+				packet.split_mut(),
 
 			Packet::V6(ref mut packet) =>
-				PM::header_mut(packet),
-		}
-	}
-
-	fn payload_mut(&mut self) -> &mut [u8] {
-		match *self {
-			Packet::V4(ref mut packet) =>
-				PM::payload_mut(packet),
-
-			Packet::V6(ref mut packet) =>
-				PM::payload_mut(packet),
+				packet.split_mut(),
 		}
 	}
 }

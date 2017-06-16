@@ -122,24 +122,15 @@ impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for
 }
 
 impl<B: AsRef<[u8]>> P for Packet<B> {
-	fn header(&self) -> &[u8] {
-		&self.buffer.as_ref()[.. self.offset() as usize * 4]
-	}
-
-	fn payload(&self) -> &[u8] {
-		&self.buffer.as_ref()[self.offset() as usize * 4 ..]
+	fn split(&self) -> (&[u8], &[u8]) {
+		self.buffer.as_ref().split_at(self.offset() as usize * 4)
 	}
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
-	fn header_mut(&mut self) -> &mut [u8] {
+	fn split_mut(&mut self) -> (&mut [u8], &mut [u8]) {
 		let offset = self.offset() as usize;
-		&mut self.buffer.as_mut()[.. offset]
-	}
-
-	fn payload_mut(&mut self) -> &mut [u8] {
-		let offset = self.offset() as usize;
-		&mut self.buffer.as_mut()[offset ..]
+		self.buffer.as_mut().split_at_mut(offset)
 	}
 }
 

@@ -35,7 +35,7 @@ sized!(Packet,
 	payload {
 		min:  0,
 		max:  u16::max_value() as usize - 8,
-		size: p => p.length() as usize - 8,
+		size: p => (p.length() as usize).saturating_sub(8),
 	});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
@@ -122,32 +122,40 @@ impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for
 }
 
 impl<B: AsRef<[u8]>> P for Packet<B> {
-	fn header(&self) -> &[u8] {
-		&self.buffer.as_ref()[.. 8]
-	}
-
-	fn payload(&self) -> &[u8] {
+	fn split(&self) -> (&[u8], &[u8]) {
 		use size::payload::Size;
 
 		let header  = 8;
 		let payload = self.size();
 
-		&self.buffer.as_ref()[header .. header + payload]
+		let buffer = self.buffer.as_ref();
+		let buffer = if buffer.len() < header + payload {
+			buffer
+		}
+		else {
+			&buffer[.. header + payload]
+		};
+
+		buffer.split_at(header)
 	}
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
-	fn header_mut(&mut self) -> &mut [u8] {
-		&mut self.buffer.as_mut()[.. 8]
-	}
-
-	fn payload_mut(&mut self) -> &mut [u8] {
+	fn split_mut(&mut self) -> (&mut [u8], &mut [u8]) {
 		use size::payload::Size;
 
 		let header  = 8;
 		let payload = self.size();
 
-		&mut self.buffer.as_mut()[header .. header + payload]
+		let mut buffer = self.buffer.as_mut();
+		let mut buffer = if buffer.len() < header + payload {
+			buffer
+		}
+		else {
+			&mut buffer[.. header + payload]
+		};
+
+		buffer.split_at_mut(header)
 	}
 }
 

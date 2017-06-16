@@ -16,19 +16,34 @@ use error::*;
 
 /// A network packet.
 pub trait Packet {
-	/// Returns a slice to the packet header.
-	fn header(&self) -> &[u8];
+	/// Return a slice to the packet header.
+	fn header(&self) -> &[u8] {
+		self.split().0
+	}
 
-	/// Returns a slice to the packet payload.
-	fn payload(&self) -> &[u8];
+	/// Return a slice to the packet payload.
+	fn payload(&self) -> &[u8] {
+		self.split().1
+	}
+
+	/// Return both slices.
+	fn split(&self) -> (&[u8], &[u8]);
 }
 
+/// A mutable network packet.
 pub trait PacketMut {
 	/// Returns a slice to the packet header.
-	fn header_mut(&mut self) -> &mut [u8];
+	fn header_mut(&mut self) -> &mut [u8] {
+		self.split_mut().0
+	}
 
 	/// Returns a slice to the packet payload.
-	fn payload_mut(&mut self) -> &mut [u8];
+	fn payload_mut(&mut self) -> &mut [u8] {
+		self.split_mut().1
+	}
+
+	/// Return both mutable slices.
+	fn split_mut(&mut self) -> (&mut [u8], &mut [u8]);
 }
 
 /// A type convertible to a `Packet`.
