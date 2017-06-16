@@ -23,7 +23,6 @@ use packet::{AsPacket, AsPacketMut};
 use ip::Protocol;
 use ip::v4::Packet;
 use ip::v4::Flags;
-use ip::v4::option;
 use ip::v4::checksum;
 
 /// IPv4 packet builder.
@@ -106,77 +105,55 @@ macro_rules! protocol {
 impl<B: Buffer> Builder<B> {
 	/// Differentiated Services Code Point.
 	pub fn dscp(mut self, value: u8) -> Result<Self> {
-		if value > 0b11_1111 {
-			return Err(ErrorKind::InvalidValue.into());
-		}
-
-		let old = self.buffer.data()[1];
-		self.buffer.data_mut()[1] = (old & 0b11) | value << 2;
-
+		Packet::unchecked(self.buffer.data_mut()).set_dscp(value)?;
 		Ok(self)
 	}
 
 	/// Explicit Congestion Notification.
 	pub fn ecn(mut self, value: u8) -> Result<Self> {
-		if value > 0b11 {
-			return Err(ErrorKind::InvalidValue.into());
-		}
-
-		let old = self.buffer.data()[1];
-		self.buffer.data_mut()[1] = (old & 0b11_1111) | value;
-
+		Packet::unchecked(self.buffer.data_mut()).set_ecn(value)?;
 		Ok(self)
 	}
 
 	/// Packet ID.
 	pub fn id(mut self, value: u16) -> Result<Self> {
-		Cursor::new(&mut self.buffer.data_mut()[4 ..])
-			.write_u16::<BigEndian>(value)?;
-
+		Packet::unchecked(self.buffer.data_mut()).set_id(value)?;
 		Ok(self)
 	}
 
 	/// Packet flags.
 	pub fn flags(mut self, value: Flags) -> Result<Self> {
-		Cursor::new(&mut self.buffer.data_mut()[6 ..])
-			.write_u16::<BigEndian>(value.bits())?;
-
+		Packet::unchecked(self.buffer.data_mut()).set_flags(value)?;
 		Ok(self)
 	}
 
 	/// Packet fragment offset.
 	pub fn offset(mut self, value: u16) -> Result<Self> {
-		Cursor::new(&mut self.buffer.data_mut()[6 ..])
-			.write_u16::<BigEndian>(value)?;
-
+		Packet::unchecked(self.buffer.data_mut()).set_offset(value)?;
 		Ok(self)
 	}
 
 	/// Time to Live.
 	pub fn ttl(mut self, value: u8) -> Result<Self> {
-		self.buffer.data_mut()[8] = value;
-
+		Packet::unchecked(self.buffer.data_mut()).set_ttl(value)?;
 		Ok(self)
 	}
 
 	/// Source address.
 	pub fn source(mut self, value: Ipv4Addr) -> Result<Self> {
-		self.buffer.data_mut()[12 .. 16].copy_from_slice(&value.octets());
-
+		Packet::unchecked(self.buffer.data_mut()).set_source(value)?;
 		Ok(self)
 	}
 
 	/// Destination address.
 	pub fn destination(mut self, value: Ipv4Addr) -> Result<Self> {
-		self.buffer.data_mut()[16 .. 20].copy_from_slice(&value.octets());
-
+		Packet::unchecked(self.buffer.data_mut()).set_destination(value)?;
 		Ok(self)
 	}
 
 	/// Inner protocol.
 	pub fn protocol(mut self, value: Protocol) -> Result<Self> {
-		self.buffer.data_mut()[9] = value.into();
-
+		Packet::unchecked(self.buffer.data_mut()).set_protocol(value)?;
 		Ok(self)
 	}
 

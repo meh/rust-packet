@@ -64,15 +64,9 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
-	/// Parse an IPv4 packet, checking the buffer contents are correct.
-	pub fn new(buffer: B) -> Result<Packet<B>> {
-		let packet = Packet::no_payload(buffer)?;
-
-		if packet.buffer.as_ref().len() < packet.length() as usize {
-			return Err(ErrorKind::SmallBuffer.into());
-		}
-
-		Ok(packet)
+	/// Create an IPv4 packet without checking the buffer.
+	pub fn unchecked(buffer: B) -> Packet<B> {
+		Packet { buffer }
 	}
 
 	/// Parse an IPv4 packet without checking the payload.
@@ -92,6 +86,17 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		}
 
 		if packet.buffer.as_ref().len() < packet.header() as usize * 4 {
+			return Err(ErrorKind::SmallBuffer.into());
+		}
+
+		Ok(packet)
+	}
+
+	/// Parse an IPv4 packet, checking the buffer contents are correct.
+	pub fn new(buffer: B) -> Result<Packet<B>> {
+		let packet = Packet::no_payload(buffer)?;
+
+		if packet.buffer.as_ref().len() < packet.length() as usize {
 			return Err(ErrorKind::SmallBuffer.into());
 		}
 
