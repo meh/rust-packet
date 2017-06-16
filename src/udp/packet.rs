@@ -51,26 +51,29 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
-	/// Parse a UDP packet, checking the buffer contents are correct.
-	pub fn new(buffer: B) -> Result<Packet<B>> {
-		let packet = Packet::no_payload(buffer)?;
-
-		if packet.buffer.as_ref().len() < packet.length() as usize {
-			return Err(ErrorKind::SmallBuffer.into());
-		}
-
-		Ok(packet)
+	/// Create a UDP packet without checking.
+	pub fn unchecked(buffer: B) -> Packet<B> {
+		Packet { buffer }
 	}
 
 	/// Parse a UDP packet without checking the payload.
 	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 
-		let packet = Packet {
-			buffer: buffer,
-		};
+		let packet = Packet::unchecked(buffer);
 
 		if packet.buffer.as_ref().len() < Self::min() {
+			return Err(ErrorKind::SmallBuffer.into());
+		}
+
+		Ok(packet)
+	}
+
+	/// Parse a UDP packet, checking the buffer contents are correct.
+	pub fn new(buffer: B) -> Result<Packet<B>> {
+		let packet = Packet::no_payload(buffer)?;
+
+		if packet.buffer.as_ref().len() < packet.length() as usize {
 			return Err(ErrorKind::SmallBuffer.into());
 		}
 

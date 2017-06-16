@@ -83,17 +83,13 @@ impl<'a, B: Buffer> AsPacketMut<'a, Packet<&'a mut [u8]>> for Builder<B> {
 impl<B: Buffer> Builder<B> {
 	/// Source port.
 	pub fn source(mut self, value: u16) -> Result<Self> {
-		Cursor::new(&mut self.buffer.data_mut()[0 ..])
-			.write_u16::<BigEndian>(value)?;
-
+		Packet::unchecked(self.buffer.data_mut()).set_source(value)?;
 		Ok(self)
 	}
 
 	/// Destination port.
 	pub fn destination(mut self, value: u16) -> Result<Self> {
-		Cursor::new(&mut self.buffer.data_mut()[2 ..])
-			.write_u16::<BigEndian>(value)?;
-
+		Packet::unchecked(self.buffer.data_mut()).set_destination(value)?;
 		Ok(self)
 	}
 
