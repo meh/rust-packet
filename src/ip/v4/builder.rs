@@ -209,7 +209,6 @@ impl<B: Buffer> Builder<B> {
 mod test {
 	use std::net::Ipv4Addr;
 	use builder::Builder;
-	use packet::Packet;
 	use ip;
 	use tcp;
 

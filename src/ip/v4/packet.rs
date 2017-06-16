@@ -453,7 +453,6 @@ impl<'a> Iterator for OptionIter<'a> {
 mod test {
 	use std::net::Ipv4Addr;
 	use ip;
-	use packet::Packet;
 
 	#[test]
 	fn short_packet() {

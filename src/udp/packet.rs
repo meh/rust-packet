@@ -13,7 +13,8 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use std::fmt;
-use byteorder::{ReadBytesExt, BigEndian};
+use std::io::Cursor;
+use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
 use error::*;
 use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
@@ -189,9 +190,76 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 }
 
+impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
+	pub fn set_source(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[0 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn set_destination(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[2 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn checked<'a, 'b, BI: AsRef<[u8]> + 'b>(&'a mut self, ip: &'b ip::Packet<BI>) -> Checked<'a, 'b, B, BI> {
+		Checked {
+			packet: self,
+			ip:     ip,
+		}
+	}
+
+	pub fn set_checksum(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[6 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn update_checksum<BI: AsRef<[u8]>>(&mut self, ip: &ip::Packet<BI>) -> Result<&mut Self> {
+		let checksum = checksum(ip, self.buffer.as_ref());
+		self.set_checksum(checksum)
+	}
+}
+
+pub struct Checked<'a, 'b, BP, BI>
+	where BP: AsRef<[u8]> + AsMut<[u8]> + 'a,
+	      BI: AsRef<[u8]> + 'b
+{
+	packet: &'a mut Packet<BP>,
+	ip:     &'b ip::Packet<BI>,
+}
+
+impl<'a, 'b, BP, BI> Checked<'a, 'b, BP, BI>
+	where BP: AsRef<[u8]> + AsMut<[u8]> + 'a,
+	      BI: AsRef<[u8]> + 'b
+{
+	pub fn set_source(&mut self, value: u16) -> Result<&mut Self> {
+		self.packet.set_source(value)?;
+		Ok(self)
+	}
+
+	pub fn set_destination(&mut self, value: u16) -> Result<&mut Self> {
+		self.packet.set_destination(value)?;
+		Ok(self)
+	}
+}
+
+impl<'a, 'b, BP, BI> Drop for Checked<'a, 'b, BP, BI>
+	where BP: AsRef<[u8]> + AsMut<[u8]> + 'a,
+	      BI: AsRef<[u8]> + 'b
+{
+	fn drop(&mut self) {
+		self.packet.update_checksum(self.ip).unwrap();
+	}
+}
+
 #[cfg(test)]
 mod test {
-	use packet::Packet;
+	use packet::{Packet, PacketMut};
 	use ip;
 	use udp;
 
@@ -206,5 +274,42 @@ mod test {
 		assert!(udp.is_valid(&ip::Packet::from(&ip)));
 
 		assert_eq!(udp.destination(), 53);
+	}
+
+	#[test]
+	fn mutable() {
+		let mut raw = [0x45u8, 0x00, 0x00, 0x42, 0x47, 0x07, 0x40, 0x00, 0x40, 0x11, 0x6e, 0xcc, 0xc0, 0xa8, 0x01, 0x89, 0xc0, 0xa8, 0x01, 0xfe, 0xba, 0x2f, 0x00, 0x35, 0x00, 0x2e, 0x1d, 0xf8, 0xbc, 0x81, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x61, 0x70, 0x69, 0x0c, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x65, 0x64, 0x03, 0x63, 0x6f, 0x6d, 0x00, 0x00, 0x1c, 0x00, 0x01];
+
+		let mut ip    = ip::v4::Packet::new(&mut raw[..]).unwrap();
+		let (ip, udp) = ip.split_mut();
+		let     ip    = ip::Packet::from(ip::v4::Packet::unchecked(ip));
+		let mut udp   = udp::Packet::new(udp).unwrap();
+
+		assert!(udp.is_valid(&ip));
+		assert_eq!(udp.destination(), 53);
+
+		udp.set_destination(9001).unwrap();
+		assert_eq!(udp.destination(), 9001);
+		assert!(!udp.is_valid(&ip));
+
+		udp.update_checksum(&ip).unwrap();
+		assert!(udp.is_valid(&ip));
+	}
+
+	#[test]
+	fn mutable_checked() {
+		let mut raw = [0x45u8, 0x00, 0x00, 0x42, 0x47, 0x07, 0x40, 0x00, 0x40, 0x11, 0x6e, 0xcc, 0xc0, 0xa8, 0x01, 0x89, 0xc0, 0xa8, 0x01, 0xfe, 0xba, 0x2f, 0x00, 0x35, 0x00, 0x2e, 0x1d, 0xf8, 0xbc, 0x81, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x61, 0x70, 0x69, 0x0c, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x65, 0x64, 0x03, 0x63, 0x6f, 0x6d, 0x00, 0x00, 0x1c, 0x00, 0x01];
+
+		let mut ip        = ip::v4::Packet::new(&mut raw[..]).unwrap();
+		let (ip, mut udp) = ip.split_mut();
+		let     ip        = ip::Packet::from(ip::v4::Packet::unchecked(ip));
+		let mut udp       = udp::Packet::new(udp).unwrap();
+
+		assert!(udp.is_valid(&ip));
+		assert_eq!(udp.destination(), 53);
+
+		udp.checked(&ip).set_destination(9001).unwrap();
+		assert_eq!(udp.destination(), 9001);
+		assert!(udp.is_valid(&ip));
 	}
 }

@@ -93,7 +93,6 @@ pub(in icmp) fn prepare<B: Buffer>(finalizer: &mut Finalization, buffer: &B) {
 #[cfg(test)]
 mod test {
 	use builder::Builder;
-	use packet::Packet;
 	use icmp;
 
 	#[test]
