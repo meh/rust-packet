@@ -13,8 +13,9 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use std::fmt;
+use std::io::Cursor;
 use std::net::Ipv4Addr;
-use byteorder::{ReadBytesExt, BigEndian};
+use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
 use error::*;
 use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
@@ -273,6 +274,150 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 }
 
+impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
+	pub fn set_dscp(&mut self, value: u8) -> Result<&mut Self> {
+		if value > 0b11_1111 {
+			return Err(ErrorKind::InvalidValue.into());
+		}
+
+		let old = self.buffer.as_ref()[1];
+		self.buffer.as_mut()[1] = (old & 0b11) | value << 2;
+
+		Ok(self)
+	}
+
+	pub fn set_ecn(&mut self, value: u8) -> Result<&mut Self> {
+		if value > 0b11 {
+			return Err(ErrorKind::InvalidValue.into());
+		}
+
+		let old = self.buffer.as_ref()[1];
+		self.buffer.as_mut()[1] = (old & 0b11_1111) | value;
+
+		Ok(self)
+	}
+
+	pub fn set_id(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.buffer.as_mut()[4 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn set_flags(&mut self, value: Flags) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[6 ..])
+			.write_u16::<BigEndian>(value.bits())?;
+
+		Ok(self)
+	}
+
+	pub fn set_offset(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[6 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn set_ttl(&mut self, value: u8) -> Result<&mut Self> {
+		self.header_mut()[8] = value;
+
+		Ok(self)
+	}
+
+	pub fn set_source(&mut self, value: Ipv4Addr) -> Result<&mut Self> {
+		self.header_mut()[12 .. 16].copy_from_slice(&value.octets());
+
+		Ok(self)
+	}
+
+	pub fn set_destination(&mut self, value: Ipv4Addr) -> Result<&mut Self> {
+		self.header_mut()[16 .. 20].copy_from_slice(&value.octets());
+
+		Ok(self)
+	}
+
+	pub fn set_protocol(&mut self, value: Protocol) -> Result<&mut Self> {
+		self.header_mut()[9] = value.into();
+
+		Ok(self)
+	}
+
+	pub fn checked(&mut self) -> Checked<B> {
+		Checked {
+			packet: self
+		}
+	}
+
+	pub fn set_checksum(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[10 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn update_checksum(&mut self) -> Result<&mut Self> {
+		let checksum = checksum(P::header(self));
+		self.set_checksum(checksum)
+	}
+}
+
+pub struct Checked<'a, B: AsRef<[u8]> + AsMut<[u8]> + 'a> {
+	packet: &'a mut Packet<B>
+}
+
+impl<'a, B: AsRef<[u8]> + AsMut<[u8]> + 'a> Checked<'a, B> {
+	pub fn set_dscp(&mut self, value: u8) -> Result<&mut Self> {
+		self.packet.set_dscp(value)?;
+		Ok(self)
+	}
+
+	pub fn set_ecn(&mut self, value: u8) -> Result<&mut Self> {
+		self.packet.set_ecn(value)?;
+		Ok(self)
+	}
+
+	pub fn set_id(&mut self, value: u16) -> Result<&mut Self> {
+		self.packet.set_id(value)?;
+		Ok(self)
+	}
+
+	pub fn set_flags(&mut self, value: Flags) -> Result<&mut Self> {
+		self.packet.set_flags(value)?;
+		Ok(self)
+	}
+
+	pub fn set_offset(&mut self, value: u16) -> Result<&mut Self> {
+		self.packet.set_offset(value)?;
+		Ok(self)
+	}
+
+	pub fn set_ttl(&mut self, value: u8) -> Result<&mut Self> {
+		self.packet.set_ttl(value)?;
+		Ok(self)
+	}
+
+	pub fn set_source(&mut self, value: Ipv4Addr) -> Result<&mut Self> {
+		self.packet.set_source(value)?;
+		Ok(self)
+	}
+
+	pub fn set_destination(&mut self, value: Ipv4Addr) -> Result<&mut Self> {
+		self.packet.set_destination(value)?;
+		Ok(self)
+	}
+
+	pub fn set_protocol(&mut self, value: Protocol) -> Result<&mut Self> {
+		self.packet.set_protocol(value)?;
+		Ok(self)
+	}
+}
+
+impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> Drop for Checked<'a, B> {
+	fn drop(&mut self) {
+		self.packet.update_checksum().unwrap();
+	}
+}
+
 /// Iterator over IP packet options.
 pub struct OptionIter<'a> {
 	buffer: &'a [u8],
@@ -319,26 +464,54 @@ mod test {
 
 	#[test]
 	fn values() {
-		let packet = [0x45u8, 0x00, 0x00, 0x34, 0x2d, 0x87, 0x00, 0x00, 0x2c, 0x06, 0x5c, 0x74, 0x42, 0x66, 0x01, 0x6c, 0xc0, 0xa8, 0x00, 0x4f];
-		let packet = ip::v4::Packet::no_payload(&packet[..]).unwrap();
+		let raw = [0x45u8, 0x00, 0x00, 0x34, 0x2d, 0x87, 0x00, 0x00, 0x2c, 0x06, 0x5c, 0x74, 0x42, 0x66, 0x01, 0x6c, 0xc0, 0xa8, 0x00, 0x4f];
+		let ip  = ip::v4::Packet::no_payload(&raw[..]).unwrap();
 
-		assert_eq!(packet.header(), 5);
-		assert_eq!(packet.length(), 52);
-		assert_eq!(packet.id(), 0x2d87);
-		assert!(packet.flags().is_empty());
-		assert_eq!(packet.protocol(), ip::Protocol::Tcp);
-		assert_eq!(packet.checksum(), 0x5c74);
-		assert!(packet.is_valid());
-		assert_eq!(packet.source(), "66.102.1.108".parse::<Ipv4Addr>().unwrap());
-		assert_eq!(packet.destination(), "192.168.0.79".parse::<Ipv4Addr>().unwrap());
+		assert_eq!(ip.header(), 5);
+		assert_eq!(ip.length(), 52);
+		assert_eq!(ip.id(), 0x2d87);
+		assert!(ip.flags().is_empty());
+		assert_eq!(ip.protocol(), ip::Protocol::Tcp);
+		assert_eq!(ip.checksum(), 0x5c74);
+		assert!(ip.is_valid());
+		assert_eq!(ip.source(), "66.102.1.108".parse::<Ipv4Addr>().unwrap());
+		assert_eq!(ip.destination(), "192.168.0.79".parse::<Ipv4Addr>().unwrap());
 	}
 
 	#[test]
 	fn owned() {
-		let packet: Vec<u8> = vec![0x45, 0x00, 0x00, 0x34, 0x2d, 0x87, 0x00, 0x00, 0x2c, 0x06, 0x5c, 0x74, 0x42, 0x66, 0x01, 0x6c, 0xc0, 0xa8, 0x00, 0x4f];
-		let packet = ip::v4::Packet::no_payload(packet).unwrap();
+		let raw: Vec<u8> = vec![0x45, 0x00, 0x00, 0x34, 0x2d, 0x87, 0x00, 0x00, 0x2c, 0x06, 0x5c, 0x74, 0x42, 0x66, 0x01, 0x6c, 0xc0, 0xa8, 0x00, 0x4f];
+		let ip           = ip::v4::Packet::no_payload(raw).unwrap();
 
-		assert_eq!(packet.checksum(), 0x5c74);
-		assert!(packet.is_valid());
+		assert_eq!(ip.checksum(), 0x5c74);
+		assert!(ip.is_valid());
+	}
+
+	#[test]
+	fn mutable() {
+		let mut raw = [0x45u8, 0x00, 0x00, 0x34, 0x2d, 0x87, 0x00, 0x00, 0x2c, 0x06, 0x5c, 0x74, 0x42, 0x66, 0x01, 0x6c, 0xc0, 0xa8, 0x00, 0x4f];
+		let mut ip  = ip::v4::Packet::no_payload(&mut raw[..]).unwrap();
+
+		assert_eq!(ip.id(), 0x2d87);
+		assert!(ip.is_valid());
+
+		ip.set_id(0x4242).unwrap();
+		assert_eq!(ip.id(), 0x4242);
+		assert!(!ip.is_valid());
+
+		ip.update_checksum().unwrap();
+		assert!(ip.is_valid());
+	}
+
+	#[test]
+	fn mutable_checked() {
+		let mut raw = [0x45u8, 0x00, 0x00, 0x34, 0x2d, 0x87, 0x00, 0x00, 0x2c, 0x06, 0x5c, 0x74, 0x42, 0x66, 0x01, 0x6c, 0xc0, 0xa8, 0x00, 0x4f];
+		let mut ip  = ip::v4::Packet::no_payload(&mut raw[..]).unwrap();
+
+		assert_eq!(ip.id(), 0x2d87);
+		assert!(ip.is_valid());
+
+		ip.checked().set_id(0x4242).unwrap();
+		assert!(ip.is_valid());
 	}
 }
