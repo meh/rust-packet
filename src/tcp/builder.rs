@@ -42,6 +42,12 @@ impl<B: Buffer> Build<B> for Builder<B> {
 		use size::header::Min;
 		buffer.next(Packet::<()>::min())?;
 
+		// Set data offset to the minimum.
+		//
+		// XXX: This is needed for shit to work. The builder uses setters on the
+		//      `tcp::Packet` which expect the data offset to be set.
+		buffer.data_mut()[12] = ((Packet::<()>::min() / 4) as u8) << 4;
+
 		Ok(Builder {
 			buffer:    buffer,
 			finalizer: Default::default(),
@@ -86,45 +92,25 @@ impl<'a, B: Buffer> AsPacketMut<'a, Packet<&'a mut [u8]>> for Builder<B> {
 impl<B: Buffer> Builder<B> {
 	/// Source port.
 	pub fn source(mut self, value: u16) -> Result<Self> {
-		Cursor::new(&mut self.buffer.data_mut()[0 ..])
-			.write_u16::<BigEndian>(value)?;
-
+		Packet::unchecked(self.buffer.data_mut()).set_source(value)?;
 		Ok(self)
 	}
 
 	/// Destination port.
 	pub fn destination(mut self, value: u16) -> Result<Self> {
-		Cursor::new(&mut self.buffer.data_mut()[2 ..])
-			.write_u16::<BigEndian>(value)?;
-
+		Packet::unchecked(self.buffer.data_mut()).set_destination(value)?;
 		Ok(self)
 	}
 
 	/// Packet sequence.
 	pub fn sequence(mut self, value: u32) -> Result<Self> {
-		Cursor::new(&mut self.buffer.data_mut()[4 ..])
-			.write_u32::<BigEndian>(value)?;
-
+		Packet::unchecked(self.buffer.data_mut()).set_sequence(value)?;
 		Ok(self)
 	}
 
 	/// Optional acknowledgment.
 	pub fn acknowledgment(mut self, value: u32) -> Result<Self> {
-		Cursor::new(&mut self.buffer.data_mut()[8 ..])
-			.write_u32::<BigEndian>(value)?;
-
-		Ok(self)
-	}
-
-	/// Data offset.
-	pub fn offset(mut self, value: u8) -> Result<Self> {
-		if value > 0b1111 {
-			return Err(ErrorKind::InvalidValue.into());
-		}
-
-		let old = self.buffer.data()[12];
-		self.buffer.data_mut()[12] = (old & 0b1111) | value << 4;
-
+		Packet::unchecked(self.buffer.data_mut()).set_acknowledgment(value)?;
 		Ok(self)
 	}
 
@@ -177,22 +163,20 @@ impl<B: Buffer> Builder<B> {
 		let length = self.buffer.length();
 
 		self.finalizer.add(move |out| {
+			// Split the buffer into IP and TCP parts.
 			let (before, after) = out.split_at_mut(ip.0 + ip.1);
 			let ip              = &mut before[ip.0 ..];
 			let tcp             = &mut after[.. length];
 
-			let checksum: Result<u16> = if let Ok(packet) = ip::v4::Packet::new(&ip) {
-				Ok(checksum(&ip::Packet::from(packet), tcp))
-			}
-			else if let Ok(packet) = ip::v6::Packet::new(&ip) {
-				Ok(checksum(&ip::Packet::from(packet), tcp))
-			}
-			else {
-				Err(ErrorKind::InvalidPacket.into())
-			};
+			// Set the TCP data offset.
+			let flags  = tcp[12] & 0b1111;
+			let offset = (length / 4) as u8;
+			tcp[12] = offset << 4 | flags;
 
+			// Calculate the checksum by parsing back the IP packet and set it.
+			let checksum = checksum(&ip::Packet::no_payload(&ip)?, tcp);
 			Cursor::new(&mut tcp[16 ..])
-				.write_u16::<BigEndian>(checksum?)?;
+				.write_u16::<BigEndian>(checksum)?;
 
 			Ok(())
 		});
@@ -218,12 +202,13 @@ mod test {
 				.source(1337).unwrap()
 				.destination(9001).unwrap()
 				.flags(tcp::flag::SYN).unwrap()
+				.payload(b"lol").unwrap()
 				.build().unwrap();
 
 		let ip = ip::v4::Packet::new(packet).unwrap();
 		assert_eq!(ip.id(), 0x2d87);
 		assert!(ip.flags().is_empty());
-		assert_eq!(ip.length(), 40);
+		assert_eq!(ip.length(), 43);
 		assert_eq!(ip.ttl(), 64);
 		assert_eq!(ip.protocol(), ip::Protocol::Tcp);
 		assert_eq!(ip.source(), "66.102.1.108".parse::<Ipv4Addr>().unwrap());
