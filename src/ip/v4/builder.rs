@@ -40,8 +40,13 @@ impl<B: Buffer> Build<B> for Builder<B> {
 		use size::header::Min;
 		buffer.next(Packet::<()>::min())?;
 
-		// Set the version to 4 and header length to 5.
-		buffer.data_mut()[0] = (4 << 4) | 5;
+		// Set version to 4 and header length to the minimum.
+		//
+		// XXX: This is needed for shit to work. The builder uses setters on the
+		//      `ip::v4::Packet` which expect the header length to be set. While the TCP
+		//      and UDP builders base their finalizer on extracting the parent IP
+		//      packet.
+		buffer.data_mut()[0] = (4 << 4) | ((Packet::<()>::min() / 4) as u8);
 
 		Ok(Builder {
 			buffer:    buffer,
@@ -178,16 +183,17 @@ impl<B: Buffer> Builder<B> {
 		let length = self.buffer.length();
 
 		self.finalizer.add(move |out| {
-			// Get the length of the header.
-			let header = out[offset] & 0b1111;
+			// Set the version to 4 and the header length.
+			let header = length / 4;
+			out[offset] = (4 << 4) | header as u8;
 
-			// Calculate and wite the total length of the packet.
+			// Calculate and write the total length of the packet.
 			let length = length + (out.len() - (offset + length));
 			Cursor::new(&mut out[offset + 2 ..])
 				.write_u16::<BigEndian>(length as u16)?;
 
 			// Calculate and write the checksum.
-			let checksum = checksum(&out[offset .. offset + (header as usize * 4)]);
+			let checksum = checksum(&out[offset .. offset + header * 4]);
 			Cursor::new(&mut out[offset + 10 ..])
 				.write_u16::<BigEndian>(checksum)?;
 
