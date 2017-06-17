@@ -13,7 +13,8 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use std::fmt;
-use byteorder::{ReadBytesExt, BigEndian};
+use std::io::Cursor;
+use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
 use error::*;
 use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
@@ -124,14 +125,15 @@ impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for
 
 impl<B: AsRef<[u8]>> P for Packet<B> {
 	fn split(&self) -> (&[u8], &[u8]) {
-		self.buffer.as_ref().split_at(self.offset() as usize * 4)
+		let offset = self.offset() as usize;
+		self.buffer.as_ref().split_at(offset * 4)
 	}
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
 	fn split_mut(&mut self) -> (&mut [u8], &mut [u8]) {
 		let offset = self.offset() as usize;
-		self.buffer.as_mut().split_at_mut(offset)
+		self.buffer.as_mut().split_at_mut(offset * 4)
 	}
 }
 
@@ -195,6 +197,135 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 }
 
+impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
+	pub fn set_source(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[0 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn set_destination(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[2 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn set_sequence(&mut self, value: u32) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[4 ..])
+			.write_u32::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn set_acknowledgment(&mut self, value: u32) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[8 ..])
+			.write_u32::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn set_flags(&mut self, value: Flags) -> Result<&mut Self> {
+		let old = self.header()[12] & 0b1111_0000;
+
+		Cursor::new(&mut self.header_mut()[12 ..])
+			.write_u16::<BigEndian>((old as u16) << 12 | value.bits())?;
+
+		Ok(self)
+	}
+
+	pub fn set_window(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[14 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn set_pointer(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[18 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn checked<'a, 'b, BI: AsRef<[u8]> + 'b>(&'a mut self, ip: &'b ip::Packet<BI>) -> Checked<'a, 'b, B, BI> {
+		Checked {
+			packet: self,
+			ip:     ip,
+		}
+	}
+
+	pub fn set_checksum(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.header_mut()[16 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	pub fn update_checksum<BI: AsRef<[u8]>>(&mut self, ip: &ip::Packet<BI>) -> Result<&mut Self> {
+		let checksum = checksum(ip, self.buffer.as_ref());
+		self.set_checksum(checksum)
+	}
+}
+
+pub struct Checked<'a, 'b, BP, BI>
+	where BP: AsRef<[u8]> + AsMut<[u8]> + 'a,
+	      BI: AsRef<[u8]> + 'b
+{
+	packet: &'a mut Packet<BP>,
+	ip:     &'b ip::Packet<BI>,
+}
+
+impl<'a, 'b, BP, BI> Checked<'a, 'b, BP, BI>
+	where BP: AsRef<[u8]> + AsMut<[u8]> + 'a,
+	      BI: AsRef<[u8]> + 'b
+{
+	pub fn set_source(&mut self, value: u16) -> Result<&mut Self> {
+		self.packet.set_source(value)?;
+		Ok(self)
+	}
+
+	pub fn set_destination(&mut self, value: u16) -> Result<&mut Self> {
+		self.packet.set_destination(value)?;
+		Ok(self)
+	}
+
+	pub fn set_sequence(&mut self, value: u32) -> Result<&mut Self> {
+		self.packet.set_sequence(value)?;
+		Ok(self)
+	}
+
+	pub fn set_acknowledgment(&mut self, value: u32) -> Result<&mut Self> {
+		self.packet.set_acknowledgment(value)?;
+		Ok(self)
+	}
+
+	pub fn set_flags(&mut self, value: Flags) -> Result<&mut Self> {
+		self.packet.set_flags(value)?;
+		Ok(self)
+	}
+
+	pub fn set_window(&mut self, value: u16) -> Result<&mut Self> {
+		self.packet.set_window(value)?;
+		Ok(self)
+	}
+
+	pub fn set_pointer(&mut self, value: u16) -> Result<&mut Self> {
+		self.packet.set_pointer(value)?;
+		Ok(self)
+	}
+}
+
+impl<'a, 'b, BP, BI> Drop for Checked<'a, 'b, BP, BI>
+	where BP: AsRef<[u8]> + AsMut<[u8]> + 'a,
+	      BI: AsRef<[u8]> + 'b
+{
+	fn drop(&mut self) {
+		self.packet.update_checksum(self.ip).unwrap();
+	}
+}
+
 /// Iterator over TCP packet options.
 pub struct OptionIter<'a> {
 	buffer: &'a [u8],
@@ -228,7 +359,7 @@ impl<'a> Iterator for OptionIter<'a> {
 
 #[cfg(test)]
 mod test {
-	use packet::Packet;
+	use packet::{Packet, PacketMut};
 	use ip;
 	use tcp;
 
@@ -244,5 +375,42 @@ mod test {
 
 		assert_eq!(tcp.flags(), tcp::flag::SYN);
 		assert_eq!(tcp.destination(), 80);
+	}
+
+	#[test]
+	fn mutable() {
+		let mut raw = [0x45u8, 0x00, 0x00, 0x3c, 0xc8, 0xa5, 0x40, 0x00, 0x40, 0x06, 0x9f, 0xd5, 0xc0, 0xa8, 0x01, 0x89, 0x08, 0x08, 0x08, 0x08, 0x9b, 0x8a, 0x00, 0x50, 0xde, 0x67, 0xc7, 0x4a, 0x00, 0x00, 0x00, 0x00, 0xa0, 0x02, 0x72, 0x10, 0x3f, 0x5f, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4, 0x04, 0x02, 0x08, 0x0a, 0x59, 0x2b, 0x29, 0x97, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x03, 0x07];
+
+		let mut ip    = ip::v4::Packet::new(&mut raw[..]).unwrap();
+		let (ip, tcp) = ip.split_mut();
+		let     ip    = ip::Packet::from(ip::v4::Packet::unchecked(ip));
+		let mut tcp   = tcp::Packet::new(tcp).unwrap();
+
+		assert!(tcp.is_valid(&ip));
+		assert_eq!(tcp.destination(), 80);
+
+		tcp.set_destination(9001).unwrap();
+		assert_eq!(tcp.destination(), 9001);
+		assert!(!tcp.is_valid(&ip));
+
+		tcp.update_checksum(&ip).unwrap();
+		assert!(tcp.is_valid(&ip));
+	}
+
+	#[test]
+	fn mutable_checked() {
+		let mut raw = [0x45u8, 0x00, 0x00, 0x3c, 0xc8, 0xa5, 0x40, 0x00, 0x40, 0x06, 0x9f, 0xd5, 0xc0, 0xa8, 0x01, 0x89, 0x08, 0x08, 0x08, 0x08, 0x9b, 0x8a, 0x00, 0x50, 0xde, 0x67, 0xc7, 0x4a, 0x00, 0x00, 0x00, 0x00, 0xa0, 0x02, 0x72, 0x10, 0x3f, 0x5f, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4, 0x04, 0x02, 0x08, 0x0a, 0x59, 0x2b, 0x29, 0x97, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x03, 0x07];
+
+		let mut ip        = ip::v4::Packet::new(&mut raw[..]).unwrap();
+		let (ip, mut tcp) = ip.split_mut();
+		let     ip        = ip::Packet::from(ip::v4::Packet::unchecked(ip));
+		let mut tcp       = tcp::Packet::new(tcp).unwrap();
+
+		assert!(tcp.is_valid(&ip));
+		assert_eq!(tcp.destination(), 80);
+
+		tcp.checked(&ip).set_destination(9001).unwrap();
+		assert_eq!(tcp.destination(), 9001);
+		assert!(tcp.is_valid(&ip));
 	}
 }

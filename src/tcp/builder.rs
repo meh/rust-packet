@@ -116,29 +116,19 @@ impl<B: Buffer> Builder<B> {
 
 	/// Packet flags.
 	pub fn flags(mut self, value: Flags) -> Result<Self> {
-		let old = self.buffer.data()[12] & 0b1111_0000;
-
-		Cursor::new(&mut self.buffer.data_mut()[12 ..])
-			.write_u16::<BigEndian>(value.bits())?;
-
-		self.buffer.data_mut()[12] |= old;
-
+		Packet::unchecked(self.buffer.data_mut()).set_flags(value)?;
 		Ok(self)
 	}
 
 	/// Packet window.
 	pub fn window(mut self, value: u16) -> Result<Self> {
-		Cursor::new(&mut self.buffer.data_mut()[14 ..])
-			.write_u16::<BigEndian>(value)?;
-
+		Packet::unchecked(self.buffer.data_mut()).set_window(value)?;
 		Ok(self)
 	}
 
 	/// Urgent pointer.
 	pub fn pointer(mut self, value: u16) -> Result<Self> {
-		Cursor::new(&mut self.buffer.data_mut()[18 ..])
-			.write_u16::<BigEndian>(value)?;
-
+		Packet::unchecked(self.buffer.data_mut()).set_pointer(value)?;
 		Ok(self)
 	}
 
