@@ -27,6 +27,54 @@ pub enum Packet<B: AsRef<[u8]>> {
 	V6(v6::Packet<B>),
 }
 
+impl<B: AsRef<[u8]>> Packet<B> {
+	/// Create an IP packet without checking the buffer.
+	///
+	/// # Note
+	///
+	/// This still checks the version field to pick an IPv4 or IPv6 packet.
+	pub fn unchecked(buffer: B) -> Packet<B> {
+		match buffer.as_ref()[0] >> 4 {
+			4 =>
+				Packet::V4(v4::Packet::unchecked(buffer)),
+
+			6 =>
+				Packet::V6(v6::Packet::unchecked(buffer)),
+
+			_ =>
+				panic!("not an IPv4 or IPv6 packet")
+		}
+	}
+
+	/// Parse an IP packet without checking the payload.
+	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
+		match buffer.as_ref()[0] >> 4 {
+			4 =>
+				v4::Packet::no_payload(buffer).map(Packet::V4),
+
+			6 =>
+				v6::Packet::no_payload(buffer).map(Packet::V6),
+
+			_ =>
+				Err(ErrorKind::InvalidPacket.into())
+		}
+	}
+
+	/// Parse an IP packet, checking the buffer contents are correct.
+	pub fn new(buffer: B) -> Result<Packet<B>> {
+		match buffer.as_ref()[0] >> 4 {
+			4 =>
+				v4::Packet::new(buffer).map(Packet::V4),
+
+			6 =>
+				v6::Packet::new(buffer).map(Packet::V6),
+
+			_ =>
+				Err(ErrorKind::InvalidPacket.into())
+		}
+	}
+}
+
 impl<B: AsRef<[u8]>> From<v4::Packet<B>> for Packet<B> {
 	fn from(value: v4::Packet<B>) -> Packet<B> {
 		Packet::V4(value)
@@ -95,29 +143,13 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Packet<B> {
 
 impl<'a, B: AsRef<[u8]>> AsPacket<'a, Packet<&'a [u8]>> for B {
 	fn as_packet(&self) -> Result<Packet<&[u8]>> {
-		if let Ok(packet) = v4::Packet::new(self.as_ref()) {
-			return Ok(Packet::V4(packet));
-		}
-
-		if let Ok(packet) = v6::Packet::new(self.as_ref()) {
-			return Ok(Packet::V6(packet));
-		}
-
-		Err(ErrorKind::InvalidPacket.into())
+		Packet::new(self.as_ref())
 	}
 }
 
 impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for B {
 	fn as_packet_mut(&mut self) -> Result<Packet<&mut [u8]>> {
-		if v4::Packet::new(self.as_ref()).is_ok() {
-			return Ok(Packet::V4(v4::Packet::new(self.as_mut()).unwrap()));
-		}
-
-		if v6::Packet::new(self.as_ref()).is_ok() {
-			return Ok(Packet::V6(v6::Packet::new(self.as_mut()).unwrap()));
-		}
-
-		Err(ErrorKind::InvalidPacket.into())
+		Packet::new(self.as_mut())
 	}
 }
 

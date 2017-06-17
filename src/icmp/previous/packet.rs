@@ -54,14 +54,18 @@ impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
+	/// Create a Source Quench, Destination Unreachable and Time Exceeded packet
+	/// without checking the buffer.
+	pub fn unchecked(buffer: B) -> Packet<B> {
+		Packet { buffer }
+	}
+
 	/// Parse a Source Quench, Destination Unreachable and Time Exceeded
 	/// packet, checking the bufffer contents are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
 		use size::header::Min;
 
-		let packet = Packet {
-			buffer: buffer,
-		};
+		let packet = Packet::unchecked(buffer);
 
 		if packet.buffer.as_ref().len() < Self::min() {
 			return Err(ErrorKind::SmallBuffer.into());
@@ -89,9 +93,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
 	/// implements `Clone` and the impl would conflict.
 	pub fn to_owned(&self) -> Packet<Vec<u8>> {
-		Packet {
-			buffer: self.buffer.as_ref().to_vec(),
-		}
+		Packet::unchecked(self.buffer.as_ref().to_vec())
 	}
 }
 

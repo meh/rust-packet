@@ -77,21 +77,21 @@ impl<'a, B: Buffer> AsPacketMut<'a, Packet<&'a mut [u8]>> for Builder<B> {
 impl<B: Buffer> Builder<B> {
 	/// MAC address for the destination.
 	pub fn destination(mut self, value: HwAddr) -> Result<Self> {
-		Packet { buffer: self.buffer.data_mut() }.set_destination(value)?;
+		Packet::unchecked(self.buffer.data_mut()).set_destination(value)?;
 
 		Ok(self)
 	}
 
 	/// MAC address for the source.
 	pub fn source(mut self, value: HwAddr) -> Result<Self> {
-		Packet { buffer: self.buffer.data_mut() }.set_source(value)?;
+		Packet::unchecked(self.buffer.data_mut()).set_source(value)?;
 
 		Ok(self)
 	}
 
 	/// Protocol of the inner packet.
 	pub fn protocol(mut self, value: Protocol) -> Result<Self> {
-		Packet { buffer: self.buffer.data_mut() }.set_protocol(value)?;
+		Packet::unchecked(self.buffer.data_mut()).set_protocol(value)?;
 
 		Ok(self)
 	}
