@@ -198,6 +198,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
+	/// Source port.
 	pub fn set_source(&mut self, value: u16) -> Result<&mut Self> {
 		Cursor::new(&mut self.header_mut()[0 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -205,6 +206,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Destination port.
 	pub fn set_destination(&mut self, value: u16) -> Result<&mut Self> {
 		Cursor::new(&mut self.header_mut()[2 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -212,6 +214,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Packet sequence.
 	pub fn set_sequence(&mut self, value: u32) -> Result<&mut Self> {
 		Cursor::new(&mut self.header_mut()[4 ..])
 			.write_u32::<BigEndian>(value)?;
@@ -219,6 +222,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Optional acknowledgment.
 	pub fn set_acknowledgment(&mut self, value: u32) -> Result<&mut Self> {
 		Cursor::new(&mut self.header_mut()[8 ..])
 			.write_u32::<BigEndian>(value)?;
@@ -226,6 +230,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Packet flags.
 	pub fn set_flags(&mut self, value: Flags) -> Result<&mut Self> {
 		let old = self.header()[12] & 0b1111_0000;
 
@@ -235,6 +240,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Packet window.
 	pub fn set_window(&mut self, value: u16) -> Result<&mut Self> {
 		Cursor::new(&mut self.header_mut()[14 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -242,6 +248,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Urgent pointer.
 	pub fn set_pointer(&mut self, value: u16) -> Result<&mut Self> {
 		Cursor::new(&mut self.header_mut()[18 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -249,6 +256,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Create a checksumed setter.
 	pub fn checked<'a, 'b, BI: AsRef<[u8]> + 'b>(&'a mut self, ip: &'b ip::Packet<BI>) -> Checked<'a, 'b, B, BI> {
 		Checked {
 			packet: self,
@@ -256,6 +264,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		}
 	}
 
+	/// Set the checksum value.
 	pub fn set_checksum(&mut self, value: u16) -> Result<&mut Self> {
 		Cursor::new(&mut self.header_mut()[16 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -263,12 +272,18 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Recalculate and set the checksum value.
 	pub fn update_checksum<BI: AsRef<[u8]>>(&mut self, ip: &ip::Packet<BI>) -> Result<&mut Self> {
 		let checksum = checksum(ip, self.buffer.as_ref());
 		self.set_checksum(checksum)
 	}
 }
 
+/// Checked wrapper for UDP packets.
+///
+/// # Note
+///
+/// The checksum recalculation happens on `Drop`, so don't leak it.
 pub struct Checked<'a, 'b, BP, BI>
 	where BP: AsRef<[u8]> + AsMut<[u8]> + 'a,
 	      BI: AsRef<[u8]> + 'b
@@ -281,36 +296,43 @@ impl<'a, 'b, BP, BI> Checked<'a, 'b, BP, BI>
 	where BP: AsRef<[u8]> + AsMut<[u8]> + 'a,
 	      BI: AsRef<[u8]> + 'b
 {
+	/// Source port.
 	pub fn set_source(&mut self, value: u16) -> Result<&mut Self> {
 		self.packet.set_source(value)?;
 		Ok(self)
 	}
 
+	/// Destination port.
 	pub fn set_destination(&mut self, value: u16) -> Result<&mut Self> {
 		self.packet.set_destination(value)?;
 		Ok(self)
 	}
 
+	/// Packet sequence.
 	pub fn set_sequence(&mut self, value: u32) -> Result<&mut Self> {
 		self.packet.set_sequence(value)?;
 		Ok(self)
 	}
 
+	/// Optional acknowledgment.
 	pub fn set_acknowledgment(&mut self, value: u32) -> Result<&mut Self> {
 		self.packet.set_acknowledgment(value)?;
 		Ok(self)
 	}
 
+	/// Packet flags.
 	pub fn set_flags(&mut self, value: Flags) -> Result<&mut Self> {
 		self.packet.set_flags(value)?;
 		Ok(self)
 	}
 
+	/// Packet window.
 	pub fn set_window(&mut self, value: u16) -> Result<&mut Self> {
 		self.packet.set_window(value)?;
 		Ok(self)
 	}
 
+	/// Urgent pointer.
 	pub fn set_pointer(&mut self, value: u16) -> Result<&mut Self> {
 		self.packet.set_pointer(value)?;
 		Ok(self)

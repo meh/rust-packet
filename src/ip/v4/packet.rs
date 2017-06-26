@@ -271,6 +271,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
+	/// Differentiated Services Code Point.
 	pub fn set_dscp(&mut self, value: u8) -> Result<&mut Self> {
 		if value > 0b11_1111 {
 			return Err(ErrorKind::InvalidValue.into());
@@ -282,6 +283,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Explicit Congestion Notification.
 	pub fn set_ecn(&mut self, value: u8) -> Result<&mut Self> {
 		if value > 0b11 {
 			return Err(ErrorKind::InvalidValue.into());
@@ -293,6 +295,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Packet ID.
 	pub fn set_id(&mut self, value: u16) -> Result<&mut Self> {
 		Cursor::new(&mut self.buffer.as_mut()[4 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -300,6 +303,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Packet flags.
 	pub fn set_flags(&mut self, value: Flags) -> Result<&mut Self> {
 		Cursor::new(&mut self.header_mut()[6 ..])
 			.write_u16::<BigEndian>(value.bits())?;
@@ -307,6 +311,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Packet fragment offset.
 	pub fn set_offset(&mut self, value: u16) -> Result<&mut Self> {
 		Cursor::new(&mut self.header_mut()[6 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -314,36 +319,42 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Time to Live.
 	pub fn set_ttl(&mut self, value: u8) -> Result<&mut Self> {
 		self.header_mut()[8] = value;
 
 		Ok(self)
 	}
 
+	/// Source address.
 	pub fn set_source(&mut self, value: Ipv4Addr) -> Result<&mut Self> {
 		self.header_mut()[12 .. 16].copy_from_slice(&value.octets());
 
 		Ok(self)
 	}
 
+	/// Destination address.
 	pub fn set_destination(&mut self, value: Ipv4Addr) -> Result<&mut Self> {
 		self.header_mut()[16 .. 20].copy_from_slice(&value.octets());
 
 		Ok(self)
 	}
 
+	/// Inner protocol.
 	pub fn set_protocol(&mut self, value: Protocol) -> Result<&mut Self> {
 		self.header_mut()[9] = value.into();
 
 		Ok(self)
 	}
 
+	/// Create a checksumed setter.
 	pub fn checked(&mut self) -> Checked<B> {
 		Checked {
 			packet: self
 		}
 	}
 
+	/// Set the checksum value.
 	pub fn set_checksum(&mut self, value: u16) -> Result<&mut Self> {
 		Cursor::new(&mut self.header_mut()[10 ..])
 			.write_u16::<BigEndian>(value)?;
@@ -351,57 +362,72 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		Ok(self)
 	}
 
+	/// Recalculate and set the checksum value.
 	pub fn update_checksum(&mut self) -> Result<&mut Self> {
 		let checksum = checksum(P::header(self));
 		self.set_checksum(checksum)
 	}
 }
 
+/// Checked wrapper for IPv4 packets.
+///
+/// # Note
+///
+/// The checksum recalculation happens on `Drop`, so don't leak it.
 pub struct Checked<'a, B: AsRef<[u8]> + AsMut<[u8]> + 'a> {
 	packet: &'a mut Packet<B>
 }
 
 impl<'a, B: AsRef<[u8]> + AsMut<[u8]> + 'a> Checked<'a, B> {
+	/// Differentiated Services Code Point.
 	pub fn set_dscp(&mut self, value: u8) -> Result<&mut Self> {
 		self.packet.set_dscp(value)?;
 		Ok(self)
 	}
 
+	/// Explicit Congestion Notification.
 	pub fn set_ecn(&mut self, value: u8) -> Result<&mut Self> {
 		self.packet.set_ecn(value)?;
 		Ok(self)
 	}
 
+	/// Packet ID.
 	pub fn set_id(&mut self, value: u16) -> Result<&mut Self> {
 		self.packet.set_id(value)?;
 		Ok(self)
 	}
 
+	/// Packet flags.
 	pub fn set_flags(&mut self, value: Flags) -> Result<&mut Self> {
 		self.packet.set_flags(value)?;
 		Ok(self)
 	}
 
+	/// Packet fragment offset.
 	pub fn set_offset(&mut self, value: u16) -> Result<&mut Self> {
 		self.packet.set_offset(value)?;
 		Ok(self)
 	}
 
+	/// Time to Live.
 	pub fn set_ttl(&mut self, value: u8) -> Result<&mut Self> {
 		self.packet.set_ttl(value)?;
 		Ok(self)
 	}
 
+	/// Source address.
 	pub fn set_source(&mut self, value: Ipv4Addr) -> Result<&mut Self> {
 		self.packet.set_source(value)?;
 		Ok(self)
 	}
 
+	/// Destination address.
 	pub fn set_destination(&mut self, value: Ipv4Addr) -> Result<&mut Self> {
 		self.packet.set_destination(value)?;
 		Ok(self)
 	}
 
+	/// Inner protocol.
 	pub fn set_protocol(&mut self, value: Protocol) -> Result<&mut Self> {
 		self.packet.set_protocol(value)?;
 		Ok(self)

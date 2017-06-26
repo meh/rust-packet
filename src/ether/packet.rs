@@ -141,18 +141,21 @@ impl<B: AsRef<[u8]>> Packet<B> {
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
+	/// Destination MAC address.
 	pub fn set_destination(&mut self, value: HwAddr) -> Result<&mut Self> {
 		self.buffer.as_mut()[0 .. 6].copy_from_slice(&value.octets());
 
 		Ok(self)
 	}
 
+	/// Source MAC address.
 	pub fn set_source(&mut self, value: HwAddr) -> Result<&mut Self> {
 		self.buffer.as_mut()[6 .. 12].copy_from_slice(&value.octets());
 
 		Ok(self)
 	}
 
+	/// Inner protocol.
 	pub fn set_protocol(&mut self, value: Protocol) -> Result<&mut Self> {
 		Cursor::new(&mut self.buffer.as_mut()[12 ..])
 			.write_u16::<BigEndian>(value.into())?;
