@@ -13,7 +13,8 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use std::fmt;
-use byteorder::{ReadBytesExt, BigEndian};
+use std::io::Cursor;
+use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
 use error::*;
 use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
@@ -122,10 +123,15 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
 }
 
 macro_rules! kind {
-	($(#[$attr:meta])* fn $module:ident) => (
+	($(#[$attr:meta])* fn $module:ident[$mutable:ident]) => (
 		$(#[$attr])*
 		pub fn $module(&self) -> Result<::icmp::$module::Packet<&B>> {
 			::icmp::$module::Packet::new(&self.buffer)
+		}
+
+		$(#[$attr])*
+		pub fn $mutable(&mut self) -> Result<::icmp::$module::Packet<&mut B>> {
+			::icmp::$module::Packet::new(&mut self.buffer)
 		}
 	)
 }
@@ -152,20 +158,37 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 
 	kind!(/// Parse an Echo Request/Reply packet.
-		fn echo);
+		fn echo[echo_mut]);
 
 	kind!(/// Parse a Timestamp Request/Reply packet.
-		fn timestamp);
+		fn timestamp[timestamp_mut]);
 
 	kind!(/// Parse an Information Request/Reply packet.
-		fn information);
+		fn information[information_mut]);
 
 	kind!(/// Parse a Parameter Problem packet.
-		fn parameter_problem);
+		fn parameter_problem[parameter_problem_mut]);
 
 	kind!(/// Parse a Redirect Message packet.
-		fn redirect_message);
+		fn redirect_message[redirect_message_mut]);
 
 	kind!(/// Parse a Source Quench, Destination Unreachable or Time Exceeded packet.
-		fn previous);
+		fn previous[previous_mut]);
+}
+
+/// Checked wrapper for ICMP packets.
+///
+/// # Note
+///
+/// The checksum recalculation happens on `Drop`, so don't leak it.
+pub struct Checked<'a, P: PM + AsRef<[u8]> + AsMut<[u8]> + 'a> {
+	pub(in icmp) packet: &'a mut P,
+}
+
+impl<'a, P: PM + AsRef<[u8]> + AsMut<[u8]> + 'a> Drop for Checked<'a, P> {
+	fn drop(&mut self) {
+		let checksum = checksum(self.packet.as_ref());
+		Cursor::new(&mut self.packet.as_mut()[2 ..])
+			.write_u16::<BigEndian>(checksum).unwrap();
+	}
 }

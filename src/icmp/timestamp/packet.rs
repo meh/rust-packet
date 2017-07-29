@@ -13,11 +13,13 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use std::fmt;
-use byteorder::{ReadBytesExt, BigEndian};
+use std::io::Cursor;
+use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
 use error::*;
 use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
 use icmp::Kind;
+use icmp::packet::Checked;
 
 /// Timestamp Request/Reply packet parser.
 pub struct Packet<B> {
@@ -167,5 +169,112 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	/// Transmission timestamp.
 	pub fn transmit(&self) -> u32 {
 		(&self.buffer.as_ref()[16 ..]).read_u32::<BigEndian>().unwrap()
+	}
+}
+
+impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
+	/// Make the packet an Echo Request.
+	pub fn make_request(&mut self) -> Result<&mut Self> {
+		self.buffer.as_mut()[0] = Kind::EchoRequest.into();
+
+		Ok(self)
+	}
+
+	/// Make the packet an Echo Reply.
+	pub fn make_reply(&mut self) -> Result<&mut Self> {
+		self.buffer.as_mut()[0] = Kind::EchoReply.into();
+
+		Ok(self)
+	}
+
+	/// Packet identifier.
+	pub fn set_identifier(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.buffer.as_mut()[4 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	/// Packet sequence.
+	pub fn set_sequence(&mut self, value: u16) -> Result<&mut Self> {
+		Cursor::new(&mut self.buffer.as_mut()[6 ..])
+			.write_u16::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	/// Creation timestamp.
+	pub fn set_originate(&mut self, value: u32) -> Result<&mut Self> {
+		Cursor::new(&mut self.buffer.as_mut()[8 ..])
+			.write_u32::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	/// Reception timestamp.
+	pub fn set_receive(&mut self, value: u32) -> Result<&mut Self> {
+		Cursor::new(&mut self.buffer.as_mut()[12 ..])
+			.write_u32::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	/// Transmission timestamp.
+	pub fn set_transmit(&mut self, value: u32) -> Result<&mut Self> {
+		Cursor::new(&mut self.buffer.as_mut()[16 ..])
+			.write_u32::<BigEndian>(value)?;
+
+		Ok(self)
+	}
+
+	/// Create a checksumed setter.
+	pub fn checked(&mut self) -> Checked<Self> {
+		Checked {
+			packet: self
+		}
+	}
+}
+
+impl<'a, B: AsRef<[u8]> + AsMut<[u8]> + 'a> Checked<'a, Packet<B>> {
+	/// Make the packet an Echo Request.
+	pub fn make_request(&mut self) -> Result<&mut Self> {
+		self.packet.make_request()?;
+		Ok(self)
+	}
+
+	/// Make the packet an Echo Reply.
+	pub fn make_reply(&mut self) -> Result<&mut Self> {
+		self.packet.make_reply()?;
+		Ok(self)
+	}
+
+	/// Packet identifier.
+	pub fn set_identifier(&mut self, value: u16) -> Result<&mut Self> {
+		self.packet.set_identifier(value)?;
+		Ok(self)
+	}
+
+	/// Packet sequence.
+	pub fn set_sequence(&mut self, value: u16) -> Result<&mut Self> {
+		self.packet.set_sequence(value)?;
+		Ok(self)
+	}
+
+	/// Creation timestamp.
+	pub fn set_originate(&mut self, value: u32) -> Result<&mut Self> {
+		self.packet.set_originate(value)?;
+		Ok(self)
+	}
+
+	/// Reception timestamp.
+	pub fn set_receive(&mut self, value: u32) -> Result<&mut Self> {
+		self.packet.set_receive(value)?;
+		Ok(self)
+	}
+
+	/// Transmission timestamp.
+	pub fn set_transmit(&mut self, value: u32) -> Result<&mut Self> {
+		self.packet.set_transmit(value)?;
+		Ok(self)
 	}
 }
