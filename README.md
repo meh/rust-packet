@@ -1,4 +1,4 @@
-packet [![Crates.io](https://img.shields.io/crates/v/packet.svg)](https://crates.io/crates/packet) ![packet](https://docs.rs/packet/badge.svg) ![WTFPL](http://img.shields.io/badge/license-WTFPL-blue.svg) [![Build Status](https://travis-ci.org/meh/rust-packet.svg?branch=master)](https://travis-ci.org/meh/rust-packet)
+packet [![Crates.io](https://img.shields.io/crates/v/packet.svg)](https://crates.io/crates/packet) [![packet](https://docs.rs/packet/badge.svg)](https://docs.rs/packet) [![WTFPL](http://img.shields.io/badge/license-WTFPL-blue.svg)](http://www.wtfpl.net/txt/copying) [![Build Status](https://travis-ci.org/meh/rust-packet.svg?branch=master)](https://travis-ci.org/meh/rust-packet)
 ======
 This crate allows the parsing and creation of various network packets with an
 ergonomic API.
