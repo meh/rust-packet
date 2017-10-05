@@ -10,7 +10,7 @@ repository  = "https://github.com/meh/rust-packet"
 keywords    = ["packet", "network", "ip", "tcp", "udp"]
 
 [dependencies]
-error-chain = "0.10"
+error-chain = "0.11"
 bitflags    = "0.9"
-byteorder   = "1.0"
+byteorder   = "1.1"
 hwaddr      = "0.1"
