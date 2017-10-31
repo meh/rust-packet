@@ -22,3 +22,6 @@ bitflags! {
 		const MORE_FRAGMENTS = 0b100;
 	}
 }
+
+pub const DONT_FRAGMENT: Flags  = Flags::DONT_FRAGMENT;
+pub const MORE_FRAGMENTS: Flags = Flags::MORE_FRAGMENTS;

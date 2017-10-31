@@ -43,3 +43,13 @@ bitflags! {
 		const NS  = 0b1_0000_0000;
 	}
 }
+
+pub const FIN: Flags = Flags::FIN;
+pub const SYN: Flags = Flags::SYN;
+pub const RST: Flags = Flags::RST;
+pub const PSH: Flags = Flags::PSH;
+pub const ACK: Flags = Flags::ACK;
+pub const URG: Flags = Flags::URG;
+pub const ECE: Flags = Flags::ECE;
+pub const CWR: Flags = Flags::CWR;
+pub const NS:  Flags = Flags::NS;
