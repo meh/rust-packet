@@ -58,7 +58,7 @@ pub fn checksum<B: AsRef<[u8]>>(ip: &ip::Packet<B>, buffer: &[u8]) -> u16 {
 	};
 
 	while let Ok(value) = prefix.read_u16::<BigEndian>() {
-		result += value as u32;
+		result += u32::from(value);
 
 		if result > 0xffff {
 			result -= 0xffff;
@@ -71,7 +71,7 @@ pub fn checksum<B: AsRef<[u8]>>(ip: &ip::Packet<B>, buffer: &[u8]) -> u16 {
 			continue;
 		}
 
-		result += value as u32;
+		result += u32::from(value);
 
 		if result > 0xffff {
 			result -= 0xffff;

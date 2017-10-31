@@ -228,7 +228,7 @@ impl<B: AsRef<[u8]>> Option<B> {
 
 	/// Option class.
 	pub fn class(&self) -> Class {
-		match ((self.buffer.as_ref()[0] >> 5) & 0b011).into() {
+		match (self.buffer.as_ref()[0] >> 5) & 0b011 {
 			0 => Class::Control,
 			2 => Class::Debugging,
 			v => Class::Reserved(v),

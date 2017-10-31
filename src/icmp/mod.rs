@@ -56,7 +56,7 @@ pub fn checksum(buffer: &[u8]) -> u16 {
 			continue;
 		}
 
-		result += value as u32;
+		result += u32::from(value);
 
 		if result > 0xffff {
 			result -= 0xffff;

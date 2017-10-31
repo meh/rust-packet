@@ -151,8 +151,8 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
 		let header  = 8;
 		let payload = self.size();
 
-		let mut buffer = self.buffer.as_mut();
-		let mut buffer = if buffer.len() < header + payload {
+		let buffer = self.buffer.as_mut();
+		let buffer = if buffer.len() < header + payload {
 			buffer
 		}
 		else {

@@ -104,7 +104,7 @@ impl<B: Buffer> Builder<B> {
 
 		self.payload = true;
 
-		for byte in value.into_iter() {
+		for byte in value {
 			self.buffer.more(1)?;
 			*self.buffer.data_mut().last_mut().unwrap() = *byte;
 		}

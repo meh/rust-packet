@@ -235,7 +235,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 		let old = self.header()[12] & 0b1111_0000;
 
 		Cursor::new(&mut self.header_mut()[12 ..])
-			.write_u16::<BigEndian>((old as u16) << 12 | value.bits())?;
+			.write_u16::<BigEndian>((u16::from(old)) << 12 | value.bits())?;
 
 		Ok(self)
 	}

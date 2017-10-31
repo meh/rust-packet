@@ -40,7 +40,7 @@ sized!(Packet,
 	payload {
 		min:  0,
 		max:  u16::max_value() as usize - 60,
-		size: p => (p.length() as usize).saturating_sub((p.header() as usize * 4)),
+		size: p => (p.length() as usize).saturating_sub(p.header() as usize * 4),
 	});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
@@ -170,8 +170,8 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
 		let header  = self.header() as usize * 4;
 		let payload = self.size();
 
-		let mut buffer = self.buffer.as_mut();
-		let mut buffer = if buffer.len() < header + payload {
+		let buffer = self.buffer.as_mut();
+		let buffer = if buffer.len() < header + payload {
 			buffer
 		}
 		else {
