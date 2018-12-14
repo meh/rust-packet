@@ -52,3 +52,6 @@ pub mod tcp;
 
 /// UDP packet parser and builder.
 pub mod udp;
+
+/// ARP packet parser and builder.
+pub mod arp;
