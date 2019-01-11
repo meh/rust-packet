@@ -33,6 +33,7 @@ pub struct Builder<B: Buffer = buffer::Dynamic> {
 	ip:      (usize, usize),
 	options: bool,
 	payload: bool,
+	payload_length: usize,
 }
 
 impl<B: Buffer> Build<B> for Builder<B> {
@@ -55,6 +56,7 @@ impl<B: Buffer> Build<B> for Builder<B> {
 			ip:      ip,
 			options: false,
 			payload: false,
+			payload_length: 0,
 		})
 	}
 
@@ -142,6 +144,7 @@ impl<B: Buffer> Builder<B> {
 
 		for byte in value {
 			self.buffer.more(1)?;
+			self.payload_length += 1;
 			*self.buffer.data_mut().last_mut().unwrap() = *byte;
 		}
 
@@ -151,6 +154,7 @@ impl<B: Buffer> Builder<B> {
 	fn prepare(&mut self) {
 		let ip     = self.ip;
 		let length = self.buffer.length();
+		let payload_length = self.payload_length;
 
 		self.finalizer.add(move |out| {
 			// Split the buffer into IP and TCP parts.
@@ -160,7 +164,8 @@ impl<B: Buffer> Builder<B> {
 
 			// Set the TCP data offset.
 			let flags  = tcp[12] & 0b1111;
-			let offset = (length / 4) as u8;
+
+			let offset = ((length - payload_length) / 4) as u8;
 			tcp[12] = offset << 4 | flags;
 
 			// Calculate the checksum by parsing back the IP packet and set it.
