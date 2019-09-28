@@ -12,10 +12,10 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-use error::*;
-use buffer::{self, Buffer};
-use builder::{Builder as Build, Finalization};
-use ip::{v4, v6};
+use crate::error::*;
+use crate::buffer::{self, Buffer};
+use crate::builder::{Builder as Build, Finalization};
+use crate::ip::{v4, v6};
 
 /// Generic IP packet builder.
 #[derive(Debug)]

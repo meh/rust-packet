@@ -12,10 +12,10 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-use error::*;
-use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
-use size;
-use ip::{v4, v6};
+use crate::error::*;
+use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
+use crate::size;
+use crate::ip::{v4, v6};
 
 /// Generic IP packet.
 #[derive(Debug)]

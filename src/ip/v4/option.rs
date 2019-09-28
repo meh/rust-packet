@@ -14,8 +14,8 @@
 
 use std::fmt;
 
-use error::*;
-use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
+use crate::error::*;
+use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
 
 /// IPv4 Option parser.
 pub struct Option<B> {
@@ -134,7 +134,7 @@ pub enum Number {
 }
 
 impl<B: AsRef<[u8]>> fmt::Debug for Option<B> {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("ip::v4::Option")
 			.field("is_copied", &self.is_copied())
 			.field("class", &self.class())
@@ -148,7 +148,7 @@ impl<B: AsRef<[u8]>> fmt::Debug for Option<B> {
 impl<B: AsRef<[u8]>> Option<B> {
 	/// Parse an IPv4 option, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Option<B>> {
-		use size::header::Min;
+		use crate::size::header::Min;
 
 		let option = Option {
 			buffer: buffer,
@@ -168,7 +168,7 @@ impl<B: AsRef<[u8]>> Option<B> {
 
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Option<B> {
 	fn as_ref(&self) -> &[u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		&self.buffer.as_ref()[.. self.size()]
 	}
@@ -176,7 +176,7 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Option<B> {
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Option<B> {
 	fn as_mut(&mut self) -> &mut [u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		let size = self.size();
 		&mut self.buffer.as_mut()[.. size]

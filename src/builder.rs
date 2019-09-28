@@ -14,8 +14,8 @@
 
 use std::fmt;
 
-use error::*;
-use buffer::Buffer;
+use crate::error::*;
+use crate::buffer::Buffer;
 
 /// A finalizer used by builders to complete building the packet, this is
 /// usually used to calculate the checksum and update length fields after the
@@ -33,7 +33,7 @@ impl<F: FnOnce(&mut [u8]) -> Result<()>> Finalizer for F {
 }
 
 /// Takes care of grouping finalizers through the builder chain.
-pub struct Finalization(Vec<Box<Finalizer>>);
+pub struct Finalization(Vec<Box<dyn Finalizer>>);
 
 impl Default for Finalization {
 	fn default() -> Self {
@@ -42,7 +42,7 @@ impl Default for Finalization {
 }
 
 impl fmt::Debug for Finalization {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("builder::Finalization")
 			.field("length", &self.0.len())
 			.finish()
@@ -56,7 +56,7 @@ impl Finalization {
 	}
 
 	/// Add a serie of finalizers.
-	pub fn extend<I: IntoIterator<Item = Box<Finalizer>>>(&mut self, finalizers: I) {
+	pub fn extend<I: IntoIterator<Item = Box<dyn Finalizer>>>(&mut self, finalizers: I) {
 		self.0.extend(finalizers.into_iter());
 	}
 
@@ -71,16 +71,16 @@ impl Finalization {
 }
 
 impl IntoIterator for Finalization {
-	type Item     = Box<Finalizer>;
-	type IntoIter = ::std::vec::IntoIter<Box<Finalizer>>;
+	type Item     = Box<dyn Finalizer>;
+	type IntoIter = ::std::vec::IntoIter<Box<dyn Finalizer>>;
 
-	fn into_iter(self) -> ::std::vec::IntoIter<Box<Finalizer>> {
+	fn into_iter(self) -> ::std::vec::IntoIter<Box<dyn Finalizer>> {
 		self.0.into_iter()
 	}
 }
 
-impl Into<Vec<Box<Finalizer>>> for Finalization {
-	fn into(self) -> Vec<Box<Finalizer>> {
+impl Into<Vec<Box<dyn Finalizer>>> for Finalization {
+	fn into(self) -> Vec<Box<dyn Finalizer>> {
 		self.0
 	}
 }

@@ -16,10 +16,10 @@ use std::fmt;
 use std::io::Cursor;
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
-use error::*;
-use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
-use icmp::Kind;
-use icmp::checksum;
+use crate::error::*;
+use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
+use crate::icmp::Kind;
+use crate::icmp::checksum;
 
 /// ICMP packet parser.
 pub struct Packet<B> {
@@ -39,7 +39,7 @@ sized!(Packet,
 	});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct(if self.is_valid() { "icmp::Packet" } else { "icmp::Packet!" })
 			.field("kind", &self.kind())
 			.field("code", &self.code())
@@ -57,7 +57,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 	/// Parse an ICMP packet, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
-		use size::header::Min;
+		use crate::size::header::Min;
 
 		let packet = Packet::unchecked(buffer);
 
@@ -83,7 +83,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 	fn as_ref(&self) -> &[u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		&self.buffer.as_ref()[.. self.size()]
 	}
@@ -91,7 +91,7 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Packet<B> {
 	fn as_mut(&mut self) -> &mut [u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		let size = self.size();
 		&mut self.buffer.as_mut()[.. size]
@@ -125,13 +125,13 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
 macro_rules! kind {
 	($(#[$attr:meta])* fn $module:ident[$mutable:ident]) => (
 		$(#[$attr])*
-		pub fn $module(&self) -> Result<::icmp::$module::Packet<&B>> {
-			::icmp::$module::Packet::new(&self.buffer)
+		pub fn $module(&self) -> Result<crate::icmp::$module::Packet<&B>> {
+			crate::icmp::$module::Packet::new(&self.buffer)
 		}
 
 		$(#[$attr])*
-		pub fn $mutable(&mut self) -> Result<::icmp::$module::Packet<&mut B>> {
-			::icmp::$module::Packet::new(&mut self.buffer)
+		pub fn $mutable(&mut self) -> Result<crate::icmp::$module::Packet<&mut B>> {
+			crate::icmp::$module::Packet::new(&mut self.buffer)
 		}
 	)
 }
@@ -181,8 +181,8 @@ impl<B: AsRef<[u8]>> Packet<B> {
 /// # Note
 ///
 /// The checksum recalculation happens on `Drop`, so don't leak it.
-pub struct Checked<'a, P: PM + AsRef<[u8]> + AsMut<[u8]> + 'a> {
-	pub(in icmp) packet: &'a mut P,
+pub struct Checked<'a, P: PM + AsRef<[u8]> + AsMut<[u8]>> {
+	pub(in crate::icmp) packet: &'a mut P,
 }
 
 impl<'a, P: PM + AsRef<[u8]> + AsMut<[u8]> + 'a> Drop for Checked<'a, P> {

@@ -13,16 +13,16 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use std::fmt;
-use std::net::Ipv4Addr;
-use byteorder::{ReadBytesExt, BigEndian};
 
-use error::*;
-use size;
-use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
-use ip::Protocol;
-use ip::v4::Flags;
-use ip::v4::option;
-use ip::v4::checksum;
+
+
+use crate::error::*;
+
+use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
+
+
+
+
 
 /// IPv6 packet parser.
 #[derive(Clone)]
@@ -44,7 +44,7 @@ sized!(Packet,
 	});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("ip::v6::Packet")
 			.finish()
 	}
@@ -58,7 +58,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 	/// Parse an IPv6 packet without checking the payload.
 	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
-		use size::header::Min;
+		use crate::size::header::Min;
 
 		let packet = Packet::unchecked(buffer);
 

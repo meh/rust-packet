@@ -15,11 +15,11 @@
 use std::io::Cursor;
 use byteorder::{WriteBytesExt, BigEndian};
 
-use error::*;
-use buffer::{self, Buffer};
-use builder::{Builder as Build, Finalization};
-use icmp::checksum;
-use icmp::{echo, timestamp, information};
+use crate::error::*;
+use crate::buffer::{self, Buffer};
+use crate::builder::{Builder as Build, Finalization};
+use crate::icmp::checksum;
+use crate::icmp::{echo, timestamp, information};
 
 /// ICMP packet builder.
 #[derive(Debug)]
@@ -77,7 +77,7 @@ impl<B: Buffer> Builder<B> {
 	}
 }
 
-pub(in icmp) fn prepare<B: Buffer>(finalizer: &mut Finalization, buffer: &B) {
+pub(in crate::icmp) fn prepare<B: Buffer>(finalizer: &mut Finalization, buffer: &B) {
 	let offset = buffer.offset();
 	let length = buffer.length();
 
@@ -92,8 +92,8 @@ pub(in icmp) fn prepare<B: Buffer>(finalizer: &mut Finalization, buffer: &B) {
 
 #[cfg(test)]
 mod test {
-	use builder::Builder;
-	use icmp;
+	use crate::builder::Builder;
+	use crate::icmp;
 
 	#[test]
 	fn simple() {

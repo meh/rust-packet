@@ -12,12 +12,12 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-use std::io::Cursor;
-use byteorder::{WriteBytesExt, BigEndian};
 
-use error::*;
-use buffer::{self, Buffer};
-use builder::{Builder as Build, Finalization};
+
+
+use crate::error::*;
+use crate::buffer::{self, Buffer};
+use crate::builder::{Builder as Build, Finalization};
 
 /// IPv6 packet builder.
 pub struct Builder<B: Buffer = buffer::Dynamic> {

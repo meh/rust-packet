@@ -16,10 +16,10 @@ use std::fmt;
 use std::io::Cursor;
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
-use error::*;
-use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
-use ip;
-use udp::checksum;
+use crate::error::*;
+use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
+use crate::ip;
+use crate::udp::checksum;
 
 /// UDP packet parser.
 pub struct Packet<B> {
@@ -40,7 +40,7 @@ sized!(Packet,
 	});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("udp::Packet")
 			.field("source", &self.source())
 			.field("destination", &self.destination())
@@ -59,7 +59,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 	/// Parse a UDP packet without checking the payload.
 	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
-		use size::header::Min;
+		use crate::size::header::Min;
 
 		let packet = Packet::unchecked(buffer);
 
@@ -98,7 +98,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 	fn as_ref(&self) -> &[u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		&self.buffer.as_ref()[.. self.size()]
 	}
@@ -106,7 +106,7 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Packet<B> {
 	fn as_mut(&mut self) -> &mut [u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		let size = self.size();
 		&mut self.buffer.as_mut()[.. size]
@@ -127,7 +127,7 @@ impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for
 
 impl<B: AsRef<[u8]>> P for Packet<B> {
 	fn split(&self) -> (&[u8], &[u8]) {
-		use size::payload::Size;
+		use crate::size::payload::Size;
 
 		let header  = 8;
 		let payload = self.size();
@@ -146,7 +146,7 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
 	fn split_mut(&mut self) -> (&mut [u8], &mut [u8]) {
-		use size::payload::Size;
+		use crate::size::payload::Size;
 
 		let header  = 8;
 		let payload = self.size();
@@ -271,9 +271,9 @@ impl<'a, 'b, BP, BI> Drop for Checked<'a, 'b, BP, BI>
 
 #[cfg(test)]
 mod test {
-	use packet::{Packet, PacketMut};
-	use ip;
-	use udp;
+	use crate::packet::{Packet, PacketMut};
+	use crate::ip;
+	use crate::udp;
 
 	#[test]
 	fn values() {
@@ -313,7 +313,7 @@ mod test {
 		let mut raw = [0x45u8, 0x00, 0x00, 0x42, 0x47, 0x07, 0x40, 0x00, 0x40, 0x11, 0x6e, 0xcc, 0xc0, 0xa8, 0x01, 0x89, 0xc0, 0xa8, 0x01, 0xfe, 0xba, 0x2f, 0x00, 0x35, 0x00, 0x2e, 0x1d, 0xf8, 0xbc, 0x81, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x61, 0x70, 0x69, 0x0c, 0x73, 0x74, 0x65, 0x61, 0x6d, 0x70, 0x6f, 0x77, 0x65, 0x72, 0x65, 0x64, 0x03, 0x63, 0x6f, 0x6d, 0x00, 0x00, 0x1c, 0x00, 0x01];
 
 		let mut ip        = ip::v4::Packet::new(&mut raw[..]).unwrap();
-		let (ip, mut udp) = ip.split_mut();
+		let (ip, udp) = ip.split_mut();
 		let     ip        = ip::Packet::from(ip::v4::Packet::unchecked(ip));
 		let mut udp       = udp::Packet::new(udp).unwrap();
 

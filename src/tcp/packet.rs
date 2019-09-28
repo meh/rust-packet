@@ -16,12 +16,12 @@ use std::fmt;
 use std::io::Cursor;
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
-use error::*;
-use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
-use ip;
-use tcp::Flags;
-use tcp::checksum;
-use tcp::option;
+use crate::error::*;
+use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
+use crate::ip;
+use crate::tcp::Flags;
+use crate::tcp::checksum;
+use crate::tcp::option;
 
 /// TCP packet parser.
 pub struct Packet<B> {
@@ -42,7 +42,7 @@ sized!(Packet,
 	});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("tcp::Packet")
 			.field("source", &self.source())
 			.field("destination", &self.destination())
@@ -66,7 +66,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 	/// Parse a TCP packet, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
-		use size::header::Min;
+		use crate::size::header::Min;
 
 		let packet = Packet::unchecked(buffer);
 
@@ -96,7 +96,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 	fn as_ref(&self) -> &[u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		&self.buffer.as_ref()[.. self.size()]
 	}
@@ -104,7 +104,7 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Packet<B> {
 	fn as_mut(&mut self) -> &mut [u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		let size = self.size();
 		&mut self.buffer.as_mut()[.. size]
@@ -190,7 +190,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 
 	/// TCP options for the packet.
-	pub fn options(&self) -> OptionIter {
+	pub fn options(&self) -> OptionIter<'_> {
 		OptionIter {
 			buffer: &self.buffer.as_ref()[20 .. (self.offset() as usize * 4)],
 		}
@@ -357,7 +357,7 @@ impl<'a> Iterator for OptionIter<'a> {
 	type Item = Result<option::Option<&'a [u8]>>;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		use size::Size;
+		use crate::size::Size;
 
 		if self.buffer.is_empty() {
 			return None;
@@ -381,9 +381,9 @@ impl<'a> Iterator for OptionIter<'a> {
 
 #[cfg(test)]
 mod test {
-	use packet::{Packet, PacketMut};
-	use ip;
-	use tcp;
+	use crate::packet::{Packet, PacketMut};
+	use crate::ip;
+	use crate::tcp;
 
 	#[test]
 	fn values() {
@@ -424,7 +424,7 @@ mod test {
 		let mut raw = [0x45u8, 0x00, 0x00, 0x3c, 0xc8, 0xa5, 0x40, 0x00, 0x40, 0x06, 0x9f, 0xd5, 0xc0, 0xa8, 0x01, 0x89, 0x08, 0x08, 0x08, 0x08, 0x9b, 0x8a, 0x00, 0x50, 0xde, 0x67, 0xc7, 0x4a, 0x00, 0x00, 0x00, 0x00, 0xa0, 0x02, 0x72, 0x10, 0x3f, 0x5f, 0x00, 0x00, 0x02, 0x04, 0x05, 0xb4, 0x04, 0x02, 0x08, 0x0a, 0x59, 0x2b, 0x29, 0x97, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x03, 0x07];
 
 		let mut ip        = ip::v4::Packet::new(&mut raw[..]).unwrap();
-		let (ip, mut tcp) = ip.split_mut();
+		let (ip, tcp) = ip.split_mut();
 		let     ip        = ip::Packet::from(ip::v4::Packet::unchecked(ip));
 		let mut tcp       = tcp::Packet::new(tcp).unwrap();
 

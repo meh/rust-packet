@@ -16,10 +16,10 @@ use std::fmt;
 use std::io::Cursor;
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
-use error::*;
-use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
-use icmp::Kind;
-use icmp::packet::Checked;
+use crate::error::*;
+use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
+use crate::icmp::Kind;
+use crate::icmp::packet::Checked;
 
 /// Information Request/Reply packet parser.
 pub struct Packet<B> {
@@ -40,7 +40,7 @@ sized!(Packet,
 	});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("icmp::information::Packet")
 			.field("request", &self.is_request())
 			.field("identifier", &self.identifier())
@@ -57,7 +57,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	/// Parse an Information Request/Reply packet, checking the buffer contents
 	/// are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
-		use size::header::Min;
+		use crate::size::header::Min;
 
 		let packet = Packet::unchecked(buffer);
 
@@ -92,7 +92,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 	fn as_ref(&self) -> &[u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		&self.buffer.as_ref()[.. self.size()]
 	}
@@ -100,7 +100,7 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Packet<B> {
 	fn as_mut(&mut self) -> &mut [u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		let size = self.size();
 		&mut self.buffer.as_mut()[.. size]
@@ -185,7 +185,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 	}
 
 	/// Create a checksumed setter.
-	pub fn checked(&mut self) -> Checked<Self> {
+	pub fn checked(&mut self) -> Checked<'_, Self> {
 		Checked {
 			packet: self
 		}

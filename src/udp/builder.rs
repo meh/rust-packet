@@ -15,13 +15,13 @@
 use std::io::Cursor;
 use byteorder::{WriteBytesExt, BigEndian};
 
-use error::*;
-use buffer::{self, Buffer};
-use builder::{Builder as Build, Finalization};
-use packet::{AsPacket, AsPacketMut};
-use ip;
-use udp::Packet;
-use udp::checksum;
+use crate::error::*;
+use crate::buffer::{self, Buffer};
+use crate::builder::{Builder as Build, Finalization};
+use crate::packet::{AsPacket, AsPacketMut};
+use crate::ip;
+use crate::udp::Packet;
+use crate::udp::checksum;
 
 /// UDP packet builder.
 #[derive(Debug)]
@@ -37,7 +37,7 @@ impl<B: Buffer> Build<B> for Builder<B> {
 	fn with(mut buffer: B) -> Result<Self> {
 		let ip = (buffer.offset(), buffer.length());
 
-		use size::header::Min;
+		use crate::size::header::Min;
 		buffer.next(Packet::<()>::min())?;
 
 		Ok(Builder {
@@ -142,10 +142,10 @@ impl<B: Buffer> Builder<B> {
 #[cfg(test)]
 mod test {
 	use std::net::Ipv4Addr;
-	use builder::Builder;
-	use packet::Packet;
-	use ip;
-	use udp;
+	use crate::builder::Builder;
+	use crate::packet::Packet;
+	use crate::ip;
+	use crate::udp;
 
 	#[test]
 	fn simple() {

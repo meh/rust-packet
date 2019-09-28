@@ -26,8 +26,8 @@ pub use self::packet::Packet;
 mod builder;
 pub use self::builder::Builder;
 
-use ip;
-use ip::Protocol;
+use crate::ip;
+use crate::ip::Protocol;
 
 /// Calculate the checksum for a TCP packet.
 ///
@@ -50,7 +50,7 @@ pub fn checksum<B: AsRef<[u8]>>(ip: &ip::Packet<B>, buffer: &[u8]) -> u16 {
 				.write_u16::<BigEndian>(buffer.len() as u16).unwrap();
 		}
 
-		ip::Packet::V6(ref packet) => {
+		ip::Packet::V6(ref _packet) => {
 			unimplemented!();
 		}
 	};

@@ -14,7 +14,7 @@
 
 use std::ops::{Deref, DerefMut};
 
-use error::*;
+use crate::error::*;
 
 /// A static buffer.
 #[derive(Eq, PartialEq, Debug)]
@@ -28,7 +28,7 @@ pub struct Buffer<'a> {
 
 impl<'a> Buffer<'a> {
 	/// Create a new static buffer wrapping the given slice.
-	pub fn new(slice: &mut [u8]) -> Buffer {
+	pub fn new(slice: &mut [u8]) -> Buffer<'_> {
 		Buffer {
 			inner: slice,
 

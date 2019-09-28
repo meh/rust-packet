@@ -14,7 +14,7 @@
 
 use std::ops::{Deref, DerefMut};
 
-use error::*;
+use crate::error::*;
 
 /// A growable buffer.
 #[derive(Clone, Eq, PartialEq, Default, Debug)]

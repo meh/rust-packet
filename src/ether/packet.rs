@@ -17,9 +17,9 @@ use std::io::Cursor;
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 use hwaddr::HwAddr;
 
-use error::*;
-use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
-use ether::Protocol;
+use crate::error::*;
+use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
+use crate::ether::Protocol;
 
 /// Ethernet frame parser.
 pub struct Packet<B> {
@@ -40,7 +40,7 @@ sized!(Packet,
 	});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("ether::Packet")
 			.field("destination", &self.source())
 			.field("source", &self.destination())
@@ -58,7 +58,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 	/// Parse an Ethernet frame, checking the buffer contents are correct.
 	pub fn new(buffer: B) -> Result<Packet<B>> {
-		use size::header::Min;
+		use crate::size::header::Min;
 
 		let packet = Packet::unchecked(buffer);
 
@@ -84,7 +84,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 	fn as_ref(&self) -> &[u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		&self.buffer.as_ref()[.. self.size()]
 	}
@@ -92,7 +92,7 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Packet<B> {
 	fn as_mut(&mut self) -> &mut [u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		let size = self.size();
 		&mut self.buffer.as_mut()[.. size]
@@ -166,10 +166,10 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 
 #[cfg(test)]
 mod test {
-	use packet::Packet;
-	use ether;
-	use ip;
-	use udp;
+	use crate::packet::Packet;
+	use crate::ether;
+	use crate::ip;
+	use crate::udp;
 
 	#[test]
 	fn values() {

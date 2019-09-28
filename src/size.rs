@@ -101,7 +101,7 @@ macro_rules! sized {
 	);
 
 	($name:ident => $part:ident; min: $value:expr, $($rest:tt)*) => (
-		impl<B> ::size::$part::Min for $name<B> {
+		impl<B> crate::size::$part::Min for $name<B> {
 			fn min() -> usize {
 				$value
 			}
@@ -111,7 +111,7 @@ macro_rules! sized {
 	);
 
 	($name:ident => $part:ident; max: $value:expr, $($rest:tt)*) => (
-		impl<B> ::size::$part::Max for $name<B> {
+		impl<B> crate::size::$part::Max for $name<B> {
 			fn max() -> usize {
 				$value
 			}
@@ -121,7 +121,7 @@ macro_rules! sized {
 	);
 
 	($name:ident => $part:ident; size: $value:expr, $($rest:tt)*) => (
-		impl<B: AsRef<[u8]>> ::size::$part::Size for $name<B> {
+		impl<B: AsRef<[u8]>> crate::size::$part::Size for $name<B> {
 			fn size(&self) -> usize {
 				$value
 			}
@@ -131,7 +131,7 @@ macro_rules! sized {
 	);
 
 	($name:ident => $part:ident; size: $packet:ident => $value:expr, $($rest:tt)*) => (
-		impl<B: AsRef<[u8]>> ::size::$part::Size for $name<B> {
+		impl<B: AsRef<[u8]>> crate::size::$part::Size for $name<B> {
 			fn size(&self) -> usize {
 				let $packet = self;
 				$value

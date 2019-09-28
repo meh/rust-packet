@@ -1,6 +1,7 @@
 [package]
 name    = "packet"
 version = "0.1.2"
+edition = "2018"
 
 authors = ["meh. <meh@schizofreni.co>"]
 license = "WTFPL"
@@ -10,7 +11,7 @@ repository  = "https://github.com/meh/rust-packet"
 keywords    = ["packet", "network", "ip", "tcp", "udp"]
 
 [dependencies]
-error-chain = "0.11"
+error-chain = "0.12"
 bitflags    = "1"
 byteorder   = "1"
 hwaddr      = "0.1"

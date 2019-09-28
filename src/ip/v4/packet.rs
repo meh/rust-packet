@@ -17,12 +17,12 @@ use std::io::Cursor;
 use std::net::Ipv4Addr;
 use byteorder::{ReadBytesExt, WriteBytesExt, BigEndian};
 
-use error::*;
-use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
-use ip::Protocol;
-use ip::v4::Flags;
-use ip::v4::option;
-use ip::v4::checksum;
+use crate::error::*;
+use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
+use crate::ip::Protocol;
+use crate::ip::v4::Flags;
+use crate::ip::v4::option;
+use crate::ip::v4::checksum;
 
 /// IPv4 packet parser.
 #[derive(Copy, Clone)]
@@ -44,7 +44,7 @@ sized!(Packet,
 	});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct(if self.is_valid() { "ip::v4::Packet" } else { "ip::v4::Packet!" })
 			.field("version", &self.version())
 			.field("header", &self.header())
@@ -72,7 +72,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 	/// Parse an IPv4 packet without checking the payload.
 	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
-		use size::header::Min;
+		use crate::size::header::Min;
 
 		let packet = Packet::unchecked(buffer);
 
@@ -117,7 +117,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 	fn as_ref(&self) -> &[u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		&self.buffer.as_ref()[.. self.size()]
 	}
@@ -125,7 +125,7 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Packet<B> {
 	fn as_mut(&mut self) -> &mut [u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		let size = self.size();
 		&mut self.buffer.as_mut()[.. size]
@@ -146,7 +146,7 @@ impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for
 
 impl<B: AsRef<[u8]>> P for Packet<B> {
 	fn split(&self) -> (&[u8], &[u8]) {
-		use size::payload::Size;
+		use crate::size::payload::Size;
 
 		let header  = self.header() as usize * 4;
 		let payload = self.size();
@@ -165,7 +165,7 @@ impl<B: AsRef<[u8]>> P for Packet<B> {
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
 	fn split_mut(&mut self) -> (&mut [u8], &mut [u8]) {
-		use size::payload::Size;
+		use crate::size::payload::Size;
 
 		let header  = self.header() as usize * 4;
 		let payload = self.size();
@@ -263,7 +263,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 	}
 
 	/// IP options for the packet.
-	pub fn options(&self) -> OptionIter {
+	pub fn options(&self) -> OptionIter<'_> {
 		OptionIter {
 			buffer: &self.buffer.as_ref()[20 .. (self.header() as usize * 4)],
 		}
@@ -348,7 +348,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 	}
 
 	/// Create a checksumed setter.
-	pub fn checked(&mut self) -> Checked<B> {
+	pub fn checked(&mut self) -> Checked<'_, B> {
 		Checked {
 			packet: self
 		}
@@ -374,7 +374,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 /// # Note
 ///
 /// The checksum recalculation happens on `Drop`, so don't leak it.
-pub struct Checked<'a, B: AsRef<[u8]> + AsMut<[u8]> + 'a> {
+pub struct Checked<'a, B: AsRef<[u8]> + AsMut<[u8]>> {
 	packet: &'a mut Packet<B>
 }
 
@@ -449,7 +449,7 @@ impl<'a> Iterator for OptionIter<'a> {
 	type Item = Result<option::Option<&'a [u8]>>;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		use size::Size;
+		use crate::size::Size;
 
 		if self.buffer.is_empty() {
 			return None;
@@ -474,7 +474,7 @@ impl<'a> Iterator for OptionIter<'a> {
 #[cfg(test)]
 mod test {
 	use std::net::Ipv4Addr;
-	use ip;
+	use crate::ip;
 
 	#[test]
 	fn short_packet() {

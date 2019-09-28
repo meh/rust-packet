@@ -15,13 +15,13 @@
 use std::io::Cursor;
 use byteorder::{WriteBytesExt, BigEndian};
 
-use error::*;
-use buffer::{self, Buffer};
-use builder::{Builder as Build, Finalization};
-use packet::{AsPacket, AsPacketMut};
-use icmp::builder;
-use icmp::Kind;
-use icmp::timestamp::Packet;
+use crate::error::*;
+use crate::buffer::{self, Buffer};
+use crate::builder::{Builder as Build, Finalization};
+use crate::packet::{AsPacket, AsPacketMut};
+use crate::icmp::builder;
+use crate::icmp::Kind;
+use crate::icmp::timestamp::Packet;
 
 /// Information Request/Reply builder.
 #[derive(Debug)]

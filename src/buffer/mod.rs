@@ -12,7 +12,7 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-use error::*;
+use crate::error::*;
 
 /// A buffer to build packets in.
 ///

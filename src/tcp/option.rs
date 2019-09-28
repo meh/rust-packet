@@ -14,9 +14,9 @@
 
 use std::fmt;
 
-use error::*;
-use size;
-use packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
+use crate::error::*;
+use crate::size;
+use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
 
 /// TCP option parser.
 pub struct Option<B> {
@@ -71,7 +71,7 @@ pub enum Number {
 }
 
 impl<B: AsRef<[u8]>> fmt::Debug for Option<B> {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("tcp::Option")
 			.field("number", &self.number())
 			.field("length", &self.length())
@@ -101,7 +101,7 @@ impl<B: AsRef<[u8]>> Option<B> {
 
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Option<B> {
 	fn as_ref(&self) -> &[u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		&self.buffer.as_ref()[.. self.size()]
 	}
@@ -109,7 +109,7 @@ impl<B: AsRef<[u8]>> AsRef<[u8]> for Option<B> {
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Option<B> {
 	fn as_mut(&mut self) -> &mut [u8] {
-		use size::Size;
+		use crate::size::Size;
 
 		let size = self.size();
 		&mut self.buffer.as_mut()[.. size]

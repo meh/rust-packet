@@ -16,14 +16,14 @@ use std::io::Cursor;
 use std::net::Ipv4Addr;
 use byteorder::{WriteBytesExt, BigEndian};
 
-use error::*;
-use buffer::{self, Buffer};
-use builder::{Builder as Build, Finalization};
-use packet::{AsPacket, AsPacketMut};
-use ip::Protocol;
-use ip::v4::Packet;
-use ip::v4::Flags;
-use ip::v4::checksum;
+use crate::error::*;
+use crate::buffer::{self, Buffer};
+use crate::builder::{Builder as Build, Finalization};
+use crate::packet::{AsPacket, AsPacketMut};
+use crate::ip::Protocol;
+use crate::ip::v4::Packet;
+use crate::ip::v4::Flags;
+use crate::ip::v4::checksum;
 
 /// IPv4 packet builder.
 #[derive(Debug)]
@@ -37,7 +37,7 @@ pub struct Builder<B: Buffer = buffer::Dynamic> {
 
 impl<B: Buffer> Build<B> for Builder<B> {
 	fn with(mut buffer: B) -> Result<Self> {
-		use size::header::Min;
+		use crate::size::header::Min;
 		buffer.next(Packet::<()>::min())?;
 
 		// Set version to 4 and header length to the minimum.
@@ -91,7 +91,7 @@ impl<'a, B: Buffer> AsPacketMut<'a, Packet<&'a mut [u8]>> for Builder<B> {
 macro_rules! protocol {
 	($(#[$attr:meta])* fn $module:ident($protocol:ident)) => (
 		$(#[$attr])*
-		pub fn $module(mut self) -> Result<::$module::Builder<B>> {
+		pub fn $module(mut self) -> Result<crate::$module::Builder<B>> {
 			if self.payload {
 				return Err(ErrorKind::AlreadyDefined.into());
 			}
@@ -99,7 +99,7 @@ macro_rules! protocol {
 			self = self.protocol(Protocol::$protocol)?;
 			self.prepare();
 
-			let mut builder = ::$module::Builder::with(self.buffer)?;
+			let mut builder = crate::$module::Builder::with(self.buffer)?;
 			builder.finalizer().extend(self.finalizer);
 
 			Ok(builder)
@@ -214,9 +214,9 @@ impl<B: Buffer> Builder<B> {
 #[cfg(test)]
 mod test {
 	use std::net::Ipv4Addr;
-	use builder::Builder;
-	use ip;
-	use tcp;
+	use crate::builder::Builder;
+	use crate::ip;
+	use crate::tcp;
 
 	#[test]
 	fn icmp() {

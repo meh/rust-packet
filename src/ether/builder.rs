@@ -16,12 +16,12 @@ use std::io::Cursor;
 use byteorder::{WriteBytesExt, BigEndian};
 use hwaddr::HwAddr;
 
-use error::*;
-use buffer::{self, Buffer};
-use builder::{Builder as Build, Finalization};
-use packet::{AsPacket, AsPacketMut};
-use ether::Packet;
-use ether::Protocol;
+use crate::error::*;
+use crate::buffer::{self, Buffer};
+use crate::builder::{Builder as Build, Finalization};
+use crate::packet::{AsPacket, AsPacketMut};
+use crate::ether::Packet;
+use crate::ether::Protocol;
 
 /// Ethernet frame builder.
 #[derive(Debug)]
@@ -34,7 +34,7 @@ pub struct Builder<B: Buffer = buffer::Dynamic> {
 
 impl<B: Buffer> Build<B> for Builder<B> {
 	fn with(mut buffer: B) -> Result<Self> {
-		use size::header::Min;
+		use crate::size::header::Min;
 		buffer.next(Packet::<()>::min())?;
 
 		Ok(Builder {
@@ -113,7 +113,7 @@ impl<B: Buffer> Builder<B> {
 	}
 
 	/// Build an IP packet inside the Ethernet frame.
-	pub fn ip(mut self) -> Result<::ip::Builder<B>> {
+	pub fn ip(mut self) -> Result<crate::ip::Builder<B>> {
 		if self.payload {
 			return Err(ErrorKind::AlreadyDefined.into());
 		}
@@ -138,7 +138,7 @@ impl<B: Buffer> Builder<B> {
 			Ok(())
 		});
 
-		let mut ip = ::ip::Builder::with(self.buffer)?;
+		let mut ip = crate::ip::Builder::with(self.buffer)?;
 		ip.finalizer().extend(self.finalizer);
 
 		Ok(ip)
@@ -148,11 +148,11 @@ impl<B: Buffer> Builder<B> {
 #[cfg(test)]
 mod test {
 	use std::net::Ipv4Addr;
-	use builder::Builder;
-	use packet::Packet;
-	use ether;
-	use ip;
-	use udp;
+	use crate::builder::Builder;
+	use crate::packet::Packet;
+	use crate::ether;
+	use crate::ip;
+	use crate::udp;
 
 	#[test]
 	fn simple() {
