@@ -70,7 +70,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 			return Err(ErrorKind::InvalidPacket.into());
 		}
 
-		Err(ErrorKind::InvalidPacket.into())
+		Ok(packet)
 	}
 
 	/// Parse an IPv6 packet, checking the buffer contents are correct.
