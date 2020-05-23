@@ -12,13 +12,6 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-#[macro_use]
-extern crate error_chain;
-#[macro_use]
-extern crate bitflags;
-
-
-
 mod error;
 pub use crate::error::*;
 

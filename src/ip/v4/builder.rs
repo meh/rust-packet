@@ -93,7 +93,7 @@ macro_rules! protocol {
 		$(#[$attr])*
 		pub fn $module(mut self) -> Result<crate::$module::Builder<B>> {
 			if self.payload {
-				return Err(ErrorKind::AlreadyDefined.into());
+				Err(Error::AlreadyDefined)?
 			}
 
 			self = self.protocol(Protocol::$protocol)?;
@@ -165,7 +165,7 @@ impl<B: Buffer> Builder<B> {
 	/// Payload for the packet.
 	pub fn payload<'a, T: IntoIterator<Item = &'a u8>>(mut self, value: T) -> Result<Self> {
 		if self.payload {
-			return Err(ErrorKind::AlreadyDefined.into());
+			Err(Error::AlreadyDefined)?
 		}
 
 		self.payload = true;

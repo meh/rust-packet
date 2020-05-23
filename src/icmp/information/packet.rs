@@ -62,7 +62,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		let packet = Packet::unchecked(buffer);
 
 		if packet.buffer.as_ref().len() < Self::min() {
-			return Err(ErrorKind::SmallBuffer.into());
+			Err(Error::SmallBuffer)?
 		}
 
 		match Kind::from(packet.buffer.as_ref()[0]) {
@@ -71,7 +71,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 				(),
 
 			_ =>
-				return Err(ErrorKind::InvalidPacket.into())
+				Err(Error::InvalidPacket)?
 		}
 
 		Ok(packet)

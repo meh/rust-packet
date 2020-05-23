@@ -49,7 +49,7 @@ impl<B: Buffer> Build<B> for Builder<B> {
 
 	fn build(mut self) -> Result<B::Inner> {
 		if !self.kind {
-			return Err(ErrorKind::InvalidPacket.into());
+			Err(Error::InvalidPacket)?
 		}
 
 		builder::prepare(&mut self.finalizer, &self.buffer);

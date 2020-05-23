@@ -56,7 +56,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 				v6::Packet::no_payload(buffer).map(Packet::V6),
 
 			_ =>
-				Err(ErrorKind::InvalidPacket.into())
+				Err(Error::InvalidPacket)
 		}
 	}
 
@@ -70,7 +70,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 				v6::Packet::new(buffer).map(Packet::V6),
 
 			_ =>
-				Err(ErrorKind::InvalidPacket.into())
+				Err(Error::InvalidPacket)
 		}
 	}
 }

@@ -13,16 +13,8 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use std::fmt;
-
-
-
 use crate::error::*;
-
 use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
-
-
-
-
 
 /// IPv6 packet parser.
 #[derive(Clone)]
@@ -63,11 +55,11 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		let packet = Packet::unchecked(buffer);
 
 		if packet.buffer.as_ref().len() < Self::min() {
-			return Err(ErrorKind::SmallBuffer.into());
+			Err(Error::SmallBuffer)?
 		}
 
 		if packet.buffer.as_ref()[0] >> 4 != 6 {
-			return Err(ErrorKind::InvalidPacket.into());
+			Err(Error::InvalidPacket)?
 		}
 
 		Ok(packet)

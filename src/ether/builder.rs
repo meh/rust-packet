@@ -99,7 +99,7 @@ impl<B: Buffer> Builder<B> {
 	/// Payload for the frame.
 	pub fn payload<'a, T: IntoIterator<Item = &'a u8>>(mut self, value: T) -> Result<Self> {
 		if self.payload {
-			return Err(ErrorKind::AlreadyDefined.into());
+			Err(Error::AlreadyDefined)?
 		}
 
 		self.payload = true;
@@ -115,7 +115,7 @@ impl<B: Buffer> Builder<B> {
 	/// Build an IP packet inside the Ethernet frame.
 	pub fn ip(mut self) -> Result<crate::ip::Builder<B>> {
 		if self.payload {
-			return Err(ErrorKind::AlreadyDefined.into());
+			Err(Error::AlreadyDefined)?
 		}
 
 		let offset = self.buffer.offset();

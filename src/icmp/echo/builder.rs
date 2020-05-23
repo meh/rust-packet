@@ -52,7 +52,7 @@ impl<B: Buffer> Build<B> for Builder<B> {
 
 	fn build(mut self) -> Result<B::Inner> {
 		if !self.kind {
-			return Err(ErrorKind::InvalidPacket.into());
+			Err(Error::InvalidPacket)?
 		}
 
 		builder::prepare(&mut self.finalizer, &self.buffer);
@@ -117,7 +117,7 @@ impl<B: Buffer> Builder<B> {
 	/// Payload for the packet.
 	pub fn payload<'a, T: IntoIterator<Item = &'a u8>>(mut self, value: T) -> Result<Self> {
 		if self.payload {
-			return Err(ErrorKind::InvalidPacket.into());
+			Err(Error::InvalidPacket)?
 		}
 
 		self.payload = true;

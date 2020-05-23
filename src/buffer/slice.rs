@@ -48,7 +48,7 @@ impl<'a> super::Buffer for Buffer<'a> {
 
 	fn next(&mut self, size: usize) -> Result<()> {
 		if self.inner.len() < self.used + size {
-			return Err(ErrorKind::SmallBuffer.into());
+			Err(Error::SmallBuffer)?
 		}
 
 		self.offset  = self.used;
@@ -64,7 +64,7 @@ impl<'a> super::Buffer for Buffer<'a> {
 
 	fn more(&mut self, size: usize) -> Result<()> {
 		if self.inner.len() < self.used + size {
-			return Err(ErrorKind::SmallBuffer.into());
+			Err(Error::SmallBuffer)?
 		}
 
 		self.offset  = self.used;

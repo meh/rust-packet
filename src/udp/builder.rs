@@ -96,7 +96,7 @@ impl<B: Buffer> Builder<B> {
 	/// Payload for the packet.
 	pub fn payload<'a, T: IntoIterator<Item = &'a u8>>(mut self, value: T) -> Result<Self> {
 		if self.payload {
-			return Err(ErrorKind::AlreadyDefined.into());
+			Err(Error::AlreadyDefined)?
 		}
 
 		self.payload = true;
@@ -128,7 +128,7 @@ impl<B: Buffer> Builder<B> {
 				Ok(checksum(&ip::Packet::from(packet), udp))
 			}
 			else {
-				Err(ErrorKind::InvalidPacket.into())
+				Err(Error::InvalidPacket)?
 			};
 
 			Cursor::new(&mut udp[6 ..])

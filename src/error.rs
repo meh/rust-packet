@@ -12,23 +12,28 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-error_chain! {
-	errors {
-		/// The buffer is too small.
-		SmallBuffer { }
+use std::{io, ffi};
+use thiserror::Error;
 
-		/// The packet is invalid.
-		InvalidPacket { }
+#[derive(Error, Debug)]
+pub enum Error {
+	#[error("the buffer is too small")]
+	SmallBuffer,
 
-		/// The value is invalid for the field.
-		InvalidValue { }
+	#[error("the packet is invalid")]
+	InvalidPacket,
 
-		/// The value has already been defined.
-		AlreadyDefined { }
-	}
+	#[error("the vaue is invalid for the field")]
+	InvalidValue,
 
-	foreign_links {
-		Io(::std::io::Error);
-		Nul(::std::ffi::NulError);
-	}
+	#[error("the value has already been defined")]
+	AlreadyDefined,
+
+	#[error(transparent)]
+	Io(#[from] io::Error),
+
+	#[error(transparent)]
+	Nul(#[from] ffi::NulError),
 }
+
+pub type Result<T> = ::std::result::Result<T, Error>;

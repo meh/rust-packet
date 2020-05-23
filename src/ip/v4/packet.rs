@@ -77,15 +77,15 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		let packet = Packet::unchecked(buffer);
 
 		if packet.buffer.as_ref().len() < Self::min() {
-			return Err(ErrorKind::SmallBuffer.into());
+			Err(Error::SmallBuffer)?
 		}
 
 		if packet.buffer.as_ref()[0] >> 4 != 4 {
-			return Err(ErrorKind::InvalidPacket.into());
+			Err(Error::InvalidPacket)?
 		}
 
 		if packet.buffer.as_ref().len() < packet.header() as usize * 4 {
-			return Err(ErrorKind::SmallBuffer.into());
+			Err(Error::SmallBuffer)?
 		}
 
 		Ok(packet)
@@ -96,7 +96,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		let packet = Packet::no_payload(buffer)?;
 
 		if packet.buffer.as_ref().len() < packet.length() as usize {
-			return Err(ErrorKind::SmallBuffer.into());
+			Err(Error::SmallBuffer)?
 		}
 
 		Ok(packet)
@@ -274,7 +274,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 	/// Differentiated Services Code Point.
 	pub fn set_dscp(&mut self, value: u8) -> Result<&mut Self> {
 		if value > 0b11_1111 {
-			return Err(ErrorKind::InvalidValue.into());
+			Err(Error::InvalidValue)?
 		}
 
 		let old = self.buffer.as_ref()[1];
@@ -286,7 +286,7 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 	/// Explicit Congestion Notification.
 	pub fn set_ecn(&mut self, value: u8) -> Result<&mut Self> {
 		if value > 0b11 {
-			return Err(ErrorKind::InvalidValue.into());
+			Err(Error::InvalidValue)?
 		}
 
 		let old = self.buffer.as_ref()[1];

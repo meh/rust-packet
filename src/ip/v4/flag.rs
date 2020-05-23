@@ -12,6 +12,8 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+use bitflags::bitflags;
+
 bitflags! {
 	/// IPv4 packet flags.
 	pub struct Flags: u16 {
