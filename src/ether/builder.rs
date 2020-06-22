@@ -143,6 +143,20 @@ impl<B: Buffer> Builder<B> {
 
 		Ok(ip)
 	}
+
+	pub fn arp(mut self) -> Result<::arp::Builder<B>> {
+		if self.payload {
+			return Err(ErrorKind::AlreadyDefined.into());
+		}
+                self = self.protocol(Protocol::Arp)?;
+
+
+                let mut builder = ::arp::Builder::with(self.buffer)?;
+                builder.finalizer().extend(self.finalizer);
+
+                Ok(builder)
+	}	
+	
 }
 
 #[cfg(test)]
