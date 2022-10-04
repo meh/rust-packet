@@ -305,16 +305,21 @@ impl<B: AsRef<[u8]> + AsMut<[u8]>> Packet<B> {
 
 	/// Packet flags.
 	pub fn set_flags(&mut self, value: Flags) -> Result<&mut Self> {
+		let offset = self.offset();
 		Cursor::new(&mut self.header_mut()[6 ..])
-			.write_u16::<BigEndian>(value.bits())?;
+			.write_u16::<BigEndian>(value.bits() << 13 | offset)?;
 
 		Ok(self)
 	}
 
 	/// Packet fragment offset.
 	pub fn set_offset(&mut self, value: u16) -> Result<&mut Self> {
+		if value > 0x1fff {
+			Err(Error::InvalidValue)?
+		}
+		let flag = self.flags().bits() << 13;
 		Cursor::new(&mut self.header_mut()[6 ..])
-			.write_u16::<BigEndian>(value)?;
+			.write_u16::<BigEndian>(value | flag)?;
 
 		Ok(self)
 	}
