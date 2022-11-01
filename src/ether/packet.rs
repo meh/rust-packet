@@ -42,8 +42,8 @@ sized!(Packet,
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 		f.debug_struct("ether::Packet")
-			.field("destination", &self.source())
-			.field("source", &self.destination())
+			.field("destination", &self.destination())
+			.field("source", &self.source())
 			.field("protocol", &self.protocol())
 			.field("payload", &self.payload())
 			.finish()
