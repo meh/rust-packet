@@ -85,6 +85,12 @@ impl Into<Vec<Box<dyn Finalizer>>> for Finalization {
 	}
 }
 
+#[derive(Debug,PartialEq,Copy,Clone)]
+pub enum Endianness {
+	LITTLE,
+	BIG,
+}
+
 /// A packet `Builder`.
 pub trait Builder<B: Buffer> {
 	/// Create a new packet `Builder` with the given buffer.

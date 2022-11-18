@@ -14,11 +14,11 @@
 
 use std::io::Cursor;
 use std::net::Ipv4Addr;
-use byteorder::{WriteBytesExt, BigEndian};
+use byteorder::{WriteBytesExt, BigEndian, LittleEndian};
 
 use crate::error::*;
 use crate::buffer::{self, Buffer};
-use crate::builder::{Builder as Build, Finalization};
+use crate::builder::{Builder as Build, Endianness, Finalization};
 use crate::packet::{AsPacket, AsPacketMut};
 use crate::ip::Protocol;
 use crate::ip::v4::Packet;
@@ -33,6 +33,8 @@ pub struct Builder<B: Buffer = buffer::Dynamic> {
 
 	options: bool,
 	payload: bool,
+
+	endianness: Endianness,
 }
 
 impl<B: Buffer> Build<B> for Builder<B> {
@@ -54,6 +56,8 @@ impl<B: Buffer> Build<B> for Builder<B> {
 
 			options: false,
 			payload: false,
+
+			endianness: Endianness::BIG
 		})
 	}
 
@@ -108,6 +112,12 @@ macro_rules! protocol {
 }
 
 impl<B: Buffer> Builder<B> {
+	/// Endianness
+	pub fn endianness(mut self, endianness: Endianness) -> Result<Self> {
+		self.endianness = endianness;
+		Ok(self)
+	}
+
 	/// Differentiated Services Code Point.
 	pub fn dscp(mut self, value: u8) -> Result<Self> {
 		Packet::unchecked(self.buffer.data_mut()).set_dscp(value)?;
@@ -181,6 +191,7 @@ impl<B: Buffer> Builder<B> {
 	fn prepare(&mut self) {
 		let offset = self.buffer.offset();
 		let length = self.buffer.length();
+		let endianness =   self.endianness;
 
 		self.finalizer.add(move |out| {
 			// Set the version to 4 and the header length.
@@ -189,13 +200,23 @@ impl<B: Buffer> Builder<B> {
 
 			// Calculate and write the total length of the packet.
 			let length = length + (out.len() - (offset + length));
-			Cursor::new(&mut out[offset + 2 ..])
-				.write_u16::<BigEndian>(length as u16)?;
+			if endianness == Endianness::BIG {
+				Cursor::new(&mut out[offset + 2 ..])
+					.write_u16::<BigEndian>(length as u16)?;
+			} else {
+				Cursor::new(&mut out[offset + 2 ..])
+					.write_u16::<LittleEndian>(length as u16)?;
+			}
 
 			// Calculate and write the checksum.
 			let checksum = checksum(&out[offset .. offset + header * 4]);
-			Cursor::new(&mut out[offset + 10 ..])
-				.write_u16::<BigEndian>(checksum)?;
+			if endianness == Endianness::BIG {
+				Cursor::new(&mut out[offset + 10..])
+					.write_u16::<BigEndian>(checksum)?;
+			} else {
+				Cursor::new(&mut out[offset + 10..])
+					.write_u16::<LittleEndian>(checksum)?;
+			}
 
 			Ok(())
 		});
@@ -214,7 +235,7 @@ impl<B: Buffer> Builder<B> {
 #[cfg(test)]
 mod test {
 	use std::net::Ipv4Addr;
-	use crate::builder::Builder;
+	use crate::builder::{Builder, Endianness};
 	use crate::ip;
 	use crate::tcp;
 
@@ -251,11 +272,15 @@ mod test {
 			.ttl(64).unwrap()
 			.source("66.102.1.108".parse().unwrap()).unwrap()
 			.destination("192.168.0.79".parse().unwrap()).unwrap()
+            .endianness(Endianness::LITTLE).unwrap()
 			.tcp().unwrap()
 				.source(1337).unwrap()
 				.destination(9001).unwrap()
-				.flags(tcp::flag::SYN).unwrap()
+            .flags(tcp::flag::SYN).unwrap()
 				.build().unwrap();
+
+		println!("{:?}", packet);
+		println!("{:?}", ip::v4::Packet::new(packet.clone()));
 
 		let packet = ip::v4::Packet::new(packet).unwrap();
 		assert_eq!(packet.id(), 0x2d87);

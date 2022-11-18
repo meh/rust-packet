@@ -13,11 +13,11 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use std::io::Cursor;
-use byteorder::{WriteBytesExt, BigEndian};
+use byteorder::{WriteBytesExt, BigEndian, LittleEndian};
 
 use crate::error::*;
 use crate::buffer::{self, Buffer};
-use crate::builder::{Builder as Build, Finalization};
+use crate::builder::{Builder as Build, Endianness, Finalization};
 use crate::packet::{AsPacket, AsPacketMut};
 use crate::ip;
 use crate::tcp::Packet;
@@ -34,6 +34,8 @@ pub struct Builder<B: Buffer = buffer::Dynamic> {
 	options: bool,
 	payload: bool,
 	payload_length: usize,
+
+	endianness: Endianness,
 }
 
 impl<B: Buffer> Build<B> for Builder<B> {
@@ -57,6 +59,7 @@ impl<B: Buffer> Build<B> for Builder<B> {
 			options: false,
 			payload: false,
 			payload_length: 0,
+			endianness: Endianness::BIG,
 		})
 	}
 
@@ -92,6 +95,12 @@ impl<'a, B: Buffer> AsPacketMut<'a, Packet<&'a mut [u8]>> for Builder<B> {
 }
 
 impl<B: Buffer> Builder<B> {
+	/// Endianness
+	pub fn endianness(mut self, endianness: Endianness) -> Result<Self> {
+		self.endianness = endianness;
+		Ok(self)
+	}
+
 	/// Source port.
 	pub fn source(mut self, value: u16) -> Result<Self> {
 		Packet::unchecked(self.buffer.data_mut()).set_source(value)?;
@@ -155,6 +164,7 @@ impl<B: Buffer> Builder<B> {
 		let ip     = self.ip;
 		let length = self.buffer.length();
 		let payload_length = self.payload_length;
+		let endianness = self.endianness;
 
 		self.finalizer.add(move |out| {
 			// Split the buffer into IP and TCP parts.
@@ -170,8 +180,13 @@ impl<B: Buffer> Builder<B> {
 
 			// Calculate the checksum by parsing back the IP packet and set it.
 			let checksum = checksum(&ip::Packet::no_payload(&ip)?, tcp);
-			Cursor::new(&mut tcp[16 ..])
-				.write_u16::<BigEndian>(checksum)?;
+			if endianness == Endianness::BIG {
+				Cursor::new(&mut tcp[16 ..])
+					.write_u16::<BigEndian>(checksum)?;
+			} else {
+				Cursor::new(&mut tcp[16 ..])
+					.write_u16::<LittleEndian>(checksum)?;
+			}
 
 			Ok(())
 		});

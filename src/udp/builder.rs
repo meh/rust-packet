@@ -13,11 +13,11 @@
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
 use std::io::Cursor;
-use byteorder::{WriteBytesExt, BigEndian};
+use byteorder::{WriteBytesExt, BigEndian, LittleEndian};
 
 use crate::error::*;
 use crate::buffer::{self, Buffer};
-use crate::builder::{Builder as Build, Finalization};
+use crate::builder::{Builder as Build, Endianness, Finalization};
 use crate::packet::{AsPacket, AsPacketMut};
 use crate::ip;
 use crate::udp::Packet;
@@ -31,6 +31,8 @@ pub struct Builder<B: Buffer = buffer::Dynamic> {
 
 	ip:      (usize, usize),
 	payload: bool,
+
+	endianness: Endianness,
 }
 
 impl<B: Buffer> Build<B> for Builder<B> {
@@ -46,6 +48,7 @@ impl<B: Buffer> Build<B> for Builder<B> {
 
 			ip:      ip,
 			payload: false,
+			endianness: Endianness::BIG
 		})
 	}
 
@@ -81,6 +84,12 @@ impl<'a, B: Buffer> AsPacketMut<'a, Packet<&'a mut [u8]>> for Builder<B> {
 }
 
 impl<B: Buffer> Builder<B> {
+	/// Checksum endianness
+	pub fn endianness(mut self, endianness: Endianness) -> Result<Self<>> {
+		self.endianness = endianness;
+		Ok(self)
+	}
+
 	/// Source port.
 	pub fn source(mut self, value: u16) -> Result<Self> {
 		Packet::unchecked(self.buffer.data_mut()).set_source(value)?;
@@ -112,14 +121,20 @@ impl<B: Buffer> Builder<B> {
 	fn prepare(&mut self) {
 		let ip     = self.ip;
 		let length = self.buffer.length();
+		let endianness = self.endianness;
 
 		self.finalizer.add(move |out| {
 			let (before, after) = out.split_at_mut(ip.0 + ip.1);
 			let ip              = &mut before[ip.0 ..];
 			let udp             = &mut after[.. length];
 
-			Cursor::new(&mut udp[4 ..])
-				.write_u16::<BigEndian>(length as u16)?;
+			if endianness == Endianness::BIG {
+				Cursor::new(&mut udp[4 ..])
+					.write_u16::<BigEndian>(length as u16)?;
+			} else {
+				Cursor::new(&mut udp[4 ..])
+					.write_u16::<LittleEndian>(length as u16)?;
+			}
 
 			let checksum: Result<u16> = if let Ok(packet) = ip::v4::Packet::no_payload(&ip) {
 				Ok(checksum(&ip::Packet::from(packet), udp))
@@ -131,8 +146,13 @@ impl<B: Buffer> Builder<B> {
 				Err(Error::InvalidPacket)?
 			};
 
-			Cursor::new(&mut udp[6 ..])
-				.write_u16::<BigEndian>(checksum?)?;
+			if endianness == Endianness::BIG {
+				Cursor::new(&mut udp[6..])
+					.write_u16::<BigEndian>(checksum?)?;
+			} else {
+				Cursor::new(&mut udp[6..])
+					.write_u16::<LittleEndian>(checksum?)?;
+			}
 
 			Ok(())
 		});
