@@ -17,6 +17,7 @@ use std::net::Ipv6Addr;
 use crate::error::*;
 use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
 use crate::ip::Protocol;
+use byteorder::{ReadBytesExt, BigEndian};
 
 /// IPv6 packet parser.
 #[derive(Clone)]
@@ -26,15 +27,15 @@ pub struct Packet<B> {
 
 sized!(Packet,
 	header {
-		min:  0,
-		max:  0,
-		size: 0,
+		min:  40,
+		max:  40,
+		size: 40,
 	}
 
 	payload {
 		min:  0,
-		max:  0,
-		size: 0,
+		max:  u16::max_value() as usize - 40,
+		size: p => p.payload_length() as usize,
 	});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
@@ -118,6 +119,11 @@ impl<B: AsRef<[u8]>> Packet<B> {
 			((self.buffer.as_ref()[38]) as u16 ) << 8 | self.buffer.as_ref()[39] as u16,
 			)
 	}
+
+	// Payload length.
+	pub fn payload_length(&self) -> u16 {
+        (self.buffer.as_ref()[4] as u16) << 8 | (self.buffer.as_ref()[5] as u16)
+    }
 }
 
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
@@ -146,12 +152,12 @@ impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for
 
 impl<B: AsRef<[u8]>> P for Packet<B> {
 	fn split(&self) -> (&[u8], &[u8]) {
-		(&[], &[])
+		self.buffer.as_ref().split_at(40)
 	}
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
 	fn split_mut(&mut self) -> (&mut [u8], &mut [u8]) {
-		(&mut [], &mut [])
+		self.buffer.as_mut().split_at_mut(40)
 	}
 }
