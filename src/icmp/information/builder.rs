@@ -153,7 +153,6 @@ mod tests {
 		assert_eq!(packet.source(), Ipv4Addr::new(127, 0, 0, 1));
 		assert_eq!(packet.destination(), Ipv4Addr::new(127, 0, 0, 16));
 		assert_eq!(packet.protocol(), Icmp);
-		let string = packet.as_ref().to_vec().into_iter().map(|x| format!("{:02X?} ", x)).collect::<String>();
 		let packet= icmp::Packet::new(packet.split().1.to_vec()).unwrap();
 		assert_eq!(packet.kind(), Kind::InformationReply);
 		assert_eq!(packet.payload()[4..].as_ref(), b"test payload");
