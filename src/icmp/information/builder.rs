@@ -29,6 +29,7 @@ pub struct Builder<B: Buffer = buffer::Dynamic> {
 	finalizer: Finalization,
 
 	kind: bool,
+	payload: bool,
 }
 
 impl<B: Buffer> Build<B> for Builder<B> {
@@ -40,6 +41,7 @@ impl<B: Buffer> Build<B> for Builder<B> {
 			finalizer: Default::default(),
 
 			kind: false,
+			payload: false,
 		})
 	}
 
@@ -109,5 +111,50 @@ impl<B: Buffer> Builder<B> {
 			.write_u16::<BigEndian>(value)?;
 
 		Ok(self)
+	}
+
+	/// Payload for the packet.
+	pub fn payload<'a, T: IntoIterator<Item = &'a u8>>(mut self, value: T) -> Result<Self> {
+		if self.payload {
+			Err(Error::InvalidPacket)?
+		}
+
+		self.payload = true;
+
+		for byte in value {
+			self.buffer.more(1)?;
+			*self.buffer.data_mut().last_mut().unwrap() = *byte;
+		}
+
+		Ok(self)
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use std::net::Ipv4Addr;
+	use crate::{icmp, ip, Packet};
+	use crate::ip::Protocol::Icmp;
+	use super::*;
+
+	#[test]
+	fn information_reply() {
+		let buffer = ip::v4::Builder::default()
+			.source(Ipv4Addr::new(127, 0, 0, 1)).unwrap()
+			.destination(Ipv4Addr::new(127, 0, 0, 16)).unwrap()
+			.icmp().unwrap()
+			.information().unwrap()
+			.reply().unwrap()
+			.payload("test payload".as_bytes()).unwrap()
+			.build()
+			.unwrap();
+
+		let packet = ip::v4::Packet::new(&buffer).unwrap();
+		assert_eq!(packet.source(), Ipv4Addr::new(127, 0, 0, 1));
+		assert_eq!(packet.destination(), Ipv4Addr::new(127, 0, 0, 16));
+		assert_eq!(packet.protocol(), Icmp);
+		let string = packet.as_ref().to_vec().into_iter().map(|x| format!("{:02X?} ", x)).collect::<String>();
+		let packet= icmp::Packet::new(packet.split().1.to_vec()).unwrap();
+		assert_eq!(packet.kind(), Kind::InformationReply);
 	}
 }
