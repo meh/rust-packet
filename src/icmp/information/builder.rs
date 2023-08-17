@@ -156,5 +156,6 @@ mod tests {
 		let string = packet.as_ref().to_vec().into_iter().map(|x| format!("{:02X?} ", x)).collect::<String>();
 		let packet= icmp::Packet::new(packet.split().1.to_vec()).unwrap();
 		assert_eq!(packet.kind(), Kind::InformationReply);
+		assert_eq!(packet.payload()[4..].as_ref(), b"test payload");
 	}
 }
