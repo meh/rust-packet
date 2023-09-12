@@ -19,119 +19,119 @@ use crate::error::*;
 /// A static buffer.
 #[derive(Eq, PartialEq, Debug)]
 pub struct Buffer<'a> {
-	inner: &'a mut [u8],
+    inner: &'a mut [u8],
 
-	offset: usize,
-	length: usize,
-	used:   usize,
+    offset: usize,
+    length: usize,
+    used: usize,
 }
 
 impl<'a> Buffer<'a> {
-	/// Create a new static buffer wrapping the given slice.
-	pub fn new(slice: &mut [u8]) -> Buffer<'_> {
-		Buffer {
-			inner: slice,
+    /// Create a new static buffer wrapping the given slice.
+    pub fn new(slice: &mut [u8]) -> Buffer<'_> {
+        Buffer {
+            inner: slice,
 
-			offset: 0,
-			length: 0,
-			used:   0,
-		}
-	}
+            offset: 0,
+            length: 0,
+            used: 0,
+        }
+    }
 }
 
 impl<'a> super::Buffer for Buffer<'a> {
-	type Inner = &'a mut [u8];
+    type Inner = &'a mut [u8];
 
-	fn into_inner(self) -> Self::Inner {
-		&mut self.inner[0 .. self.used]
-	}
+    fn into_inner(self) -> Self::Inner {
+        &mut self.inner[0..self.used]
+    }
 
-	fn next(&mut self, size: usize) -> Result<()> {
-		if self.inner.len() < self.used + size {
-			Err(Error::SmallBuffer)?
-		}
+    fn next(&mut self, size: usize) -> Result<()> {
+        if self.inner.len() < self.used + size {
+            Err(Error::SmallBuffer)?
+        }
 
-		self.offset  = self.used;
-		self.length  = size;
-		self.used   += size;
+        self.offset = self.used;
+        self.length = size;
+        self.used += size;
 
-		for byte in self.data_mut() {
-			*byte = 0;
-		}
+        for byte in self.data_mut() {
+            *byte = 0;
+        }
 
-		Ok(())
-	}
+        Ok(())
+    }
 
-	fn more(&mut self, size: usize) -> Result<()> {
-		if self.inner.len() < self.used + size {
-			Err(Error::SmallBuffer)?
-		}
+    fn more(&mut self, size: usize) -> Result<()> {
+        if self.inner.len() < self.used + size {
+            Err(Error::SmallBuffer)?
+        }
 
-		self.offset  = self.used;
-		self.length += size;
-		self.used   += size;
+        self.offset = self.used;
+        self.length += size;
+        self.used += size;
 
-		let length = self.length;
-		for byte in &mut self.data_mut()[length - size ..] {
-			*byte = 0;
-		}
+        let length = self.length;
+        for byte in &mut self.data_mut()[length - size..] {
+            *byte = 0;
+        }
 
-		Ok(())
-	}
+        Ok(())
+    }
 
-	fn clear(&mut self) {
-		self.offset = 0;
-		self.length = 0;
-		self.used   = 0;
-	}
+    fn clear(&mut self) {
+        self.offset = 0;
+        self.length = 0;
+        self.used = 0;
+    }
 
-	fn used(&self) -> usize {
-		self.used
-	}
+    fn used(&self) -> usize {
+        self.used
+    }
 
-	fn offset(&self) -> usize {
-		self.offset
-	}
+    fn offset(&self) -> usize {
+        self.offset
+    }
 
-	fn length(&self) -> usize {
-		self.length
-	}
+    fn length(&self) -> usize {
+        self.length
+    }
 
-	fn data(&self) -> &[u8] {
-		&self.inner[self.offset .. self.offset + self.length]
-	}
+    fn data(&self) -> &[u8] {
+        &self.inner[self.offset..self.offset + self.length]
+    }
 
-	fn data_mut(&mut self) -> &mut [u8] {
-		&mut self.inner[self.offset .. self.offset + self.length]
-	}
+    fn data_mut(&mut self) -> &mut [u8] {
+        &mut self.inner[self.offset..self.offset + self.length]
+    }
 }
 
 impl<'a> AsRef<[u8]> for Buffer<'a> {
-	fn as_ref(&self) -> &[u8] {
-		use super::Buffer;
-		self.data()
-	}
+    fn as_ref(&self) -> &[u8] {
+        use super::Buffer;
+        self.data()
+    }
 }
 
 impl<'a> AsMut<[u8]> for Buffer<'a> {
-	fn as_mut(&mut self) -> &mut [u8] {
-		use super::Buffer;
-		self.data_mut()
-	}
+    fn as_mut(&mut self) -> &mut [u8] {
+        use super::Buffer;
+        self.data_mut()
+    }
 }
 
 impl<'a> Deref for Buffer<'a> {
-	type Target = [u8];
+    type Target = [u8];
 
-	fn deref(&self) -> &Self::Target {
-		use super::Buffer;
-		self.data()
-	}
+    fn deref(&self) -> &Self::Target {
+        use super::Buffer;
+        self.data()
+    }
 }
 
 impl<'a> DerefMut for Buffer<'a> {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		use super::Buffer;
-		self.data_mut()
-	}
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        use super::Buffer;
+        self.data_mut()
+    }
 }

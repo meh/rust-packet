@@ -12,99 +12,105 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
+use byteorder::{BigEndian, WriteBytesExt};
 use std::io::Cursor;
-use byteorder::{WriteBytesExt, BigEndian};
 
-use crate::error::*;
 use crate::buffer::{self, Buffer};
 use crate::builder::{Builder as Build, Finalization};
+use crate::error::*;
 use crate::icmp::checksum;
-use crate::icmp::{echo, timestamp, information};
+use crate::icmp::{echo, information, timestamp};
 
 /// ICMP packet builder.
 #[derive(Debug)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
-	buffer:    B,
-	finalizer: Finalization,
+    buffer: B,
+    finalizer: Finalization,
 }
 
 impl<B: Buffer> Build<B> for Builder<B> {
-	fn with(buffer: B) -> Result<Self> {
-		Ok(Builder {
-			buffer:    buffer,
-			finalizer: Default::default(),
-		})
-	}
+    fn with(buffer: B) -> Result<Self> {
+        Ok(Builder {
+            buffer,
+            finalizer: Default::default(),
+        })
+    }
 
-	fn finalizer(&mut self) -> &mut Finalization {
-		&mut self.finalizer
-	}
+    fn finalizer(&mut self) -> &mut Finalization {
+        &mut self.finalizer
+    }
 
-	fn build(self) -> Result<B::Inner> {
-		Err(Error::InvalidPacket)
-	}
+    fn build(self) -> Result<B::Inner> {
+        Err(Error::InvalidPacket)
+    }
 }
 
 impl Default for Builder<buffer::Dynamic> {
-	fn default() -> Self {
-		Builder::with(buffer::Dynamic::default()).unwrap()
-	}
+    fn default() -> Self {
+        Builder::with(buffer::Dynamic::default()).unwrap()
+    }
 }
 
 impl<B: Buffer> Builder<B> {
-	/// Build an Echo Request/Reply packet.
-	pub fn echo(self) -> Result<echo::Builder<B>> {
-		let mut echo = echo::Builder::with(self.buffer)?;
-		echo.finalizer().extend(self.finalizer);
+    /// Build an Echo Request/Reply packet.
+    pub fn echo(self) -> Result<echo::Builder<B>> {
+        let mut echo = echo::Builder::with(self.buffer)?;
+        echo.finalizer().extend(self.finalizer);
 
-		Ok(echo)
-	}
+        Ok(echo)
+    }
 
-	/// Create an Information Request/Reply packet.
-	pub fn information(self) -> Result<information::Builder<B>> {
-		let mut information = information::Builder::with(self.buffer)?;
-		information.finalizer().extend(self.finalizer);
+    /// Create an Information Request/Reply packet.
+    pub fn information(self) -> Result<information::Builder<B>> {
+        let mut information = information::Builder::with(self.buffer)?;
+        information.finalizer().extend(self.finalizer);
 
-		Ok(information)
-	}
+        Ok(information)
+    }
 
-	/// Create a Timestamp Request/Reply packet.
-	pub fn timestamp(self) -> Result<timestamp::Builder<B>> {
-		let mut timestamp = timestamp::Builder::with(self.buffer)?;
-		timestamp.finalizer().extend(self.finalizer);
+    /// Create a Timestamp Request/Reply packet.
+    pub fn timestamp(self) -> Result<timestamp::Builder<B>> {
+        let mut timestamp = timestamp::Builder::with(self.buffer)?;
+        timestamp.finalizer().extend(self.finalizer);
 
-		Ok(timestamp)
-	}
+        Ok(timestamp)
+    }
 }
 
 pub(in crate::icmp) fn prepare<B: Buffer>(finalizer: &mut Finalization, buffer: &B) {
-	let offset = buffer.offset();
-	let length = buffer.length();
+    let offset = buffer.offset();
+    let length = buffer.length();
 
-	finalizer.add(move |out| {
-		let checksum = checksum(&out[offset .. offset + length]);
-		Cursor::new(&mut out[offset + 2 ..])
-			.write_u16::<BigEndian>(checksum)?;
+    finalizer.add(move |out| {
+        let checksum = checksum(&out[offset..offset + length]);
+        Cursor::new(&mut out[offset + 2..]).write_u16::<BigEndian>(checksum)?;
 
-		Ok(())
-	});
+        Ok(())
+    });
 }
 
 #[cfg(test)]
 mod test {
-	use crate::builder::Builder;
-	use crate::icmp;
+    use crate::builder::Builder;
+    use crate::icmp;
 
-	#[test]
-	fn simple() {
-		let packet = icmp::Builder::default()
-			.echo().unwrap().request().unwrap()
-				.identifier(42).unwrap()
-				.sequence(2).unwrap()
-				.payload(b"test").unwrap()
-				.build().unwrap();
+    #[test]
+    fn simple() {
+        let packet = icmp::Builder::default()
+            .echo()
+            .unwrap()
+            .request()
+            .unwrap()
+            .identifier(42)
+            .unwrap()
+            .sequence(2)
+            .unwrap()
+            .payload(b"test")
+            .unwrap()
+            .build()
+            .unwrap();
 
-		let packet = icmp::Packet::new(packet).unwrap();
-		assert_eq!(packet.kind(), icmp::Kind::EchoRequest);
-	}
+        let packet = icmp::Packet::new(packet).unwrap();
+        assert_eq!(packet.kind(), icmp::Kind::EchoRequest);
+    }
 }

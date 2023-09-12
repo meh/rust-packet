@@ -19,103 +19,103 @@ use crate::error::*;
 /// A growable buffer.
 #[derive(Clone, Eq, PartialEq, Default, Debug)]
 pub struct Buffer {
-	inner: Vec<u8>,
+    inner: Vec<u8>,
 
-	offset: usize,
-	length: usize,
+    offset: usize,
+    length: usize,
 }
 
 impl Buffer {
-	/// Create a new growable buffer.
-	pub fn new() -> Self {
-		Default::default()
-	}
+    /// Create a new growable buffer.
+    pub fn new() -> Self {
+        Default::default()
+    }
 }
 
 impl super::Buffer for Buffer {
-	type Inner = Vec<u8>;
+    type Inner = Vec<u8>;
 
-	fn into_inner(self) -> Self::Inner {
-		self.inner
-	}
+    fn into_inner(self) -> Self::Inner {
+        self.inner
+    }
 
-	fn next(&mut self, size: usize) -> Result<()> {
-		self.offset += self.length;
-		self.length  = size;
+    fn next(&mut self, size: usize) -> Result<()> {
+        self.offset += self.length;
+        self.length = size;
 
-		let current = self.inner.len();
-		self.inner.resize(current + size, 0);
+        let current = self.inner.len();
+        self.inner.resize(current + size, 0);
 
-		Ok(())
-	}
+        Ok(())
+    }
 
-	fn more(&mut self, size: usize) -> Result<()> {
-		let current = self.inner.len();
-		self.inner.resize(current + size, 0);
-		self.length += size;
+    fn more(&mut self, size: usize) -> Result<()> {
+        let current = self.inner.len();
+        self.inner.resize(current + size, 0);
+        self.length += size;
 
-		Ok(())
-	}
+        Ok(())
+    }
 
-	fn clear(&mut self) {
-		self.inner.clear();
-		self.offset = 0;
-		self.length = 0;
-	}
+    fn clear(&mut self) {
+        self.inner.clear();
+        self.offset = 0;
+        self.length = 0;
+    }
 
-	fn used(&self) -> usize {
-		self.inner.len()
-	}
+    fn used(&self) -> usize {
+        self.inner.len()
+    }
 
-	fn offset(&self) -> usize {
-		self.offset
-	}
+    fn offset(&self) -> usize {
+        self.offset
+    }
 
-	fn length(&self) -> usize {
-		self.length
-	}
+    fn length(&self) -> usize {
+        self.length
+    }
 
-	fn data(&self) -> &[u8] {
-		&self.inner[self.offset .. self.offset + self.length]
-	}
+    fn data(&self) -> &[u8] {
+        &self.inner[self.offset..self.offset + self.length]
+    }
 
-	fn data_mut(&mut self) -> &mut [u8] {
-		&mut self.inner[self.offset .. self.offset + self.length]
-	}
+    fn data_mut(&mut self) -> &mut [u8] {
+        &mut self.inner[self.offset..self.offset + self.length]
+    }
 }
 
-impl Into<Vec<u8>> for Buffer {
-	fn into(self) -> Vec<u8> {
-		self.inner
-	}
+impl From<Buffer> for Vec<u8> {
+    fn from(buffer: Buffer) -> Self {
+        buffer.inner
+    }
 }
 
 impl AsRef<[u8]> for Buffer {
-	fn as_ref(&self) -> &[u8] {
-		use super::Buffer;
-		self.data()
-	}
+    fn as_ref(&self) -> &[u8] {
+        use super::Buffer;
+        self.data()
+    }
 }
 
 impl AsMut<[u8]> for Buffer {
-	fn as_mut(&mut self) -> &mut [u8] {
-		use super::Buffer;
-		self.data_mut()
-	}
+    fn as_mut(&mut self) -> &mut [u8] {
+        use super::Buffer;
+        self.data_mut()
+    }
 }
 
 impl Deref for Buffer {
-	type Target = [u8];
+    type Target = [u8];
 
-	fn deref(&self) -> &Self::Target {
-		use super::Buffer;
-		self.data()
-	}
+    fn deref(&self) -> &Self::Target {
+        use super::Buffer;
+        self.data()
+    }
 }
 
 impl DerefMut for Buffer {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		use super::Buffer;
-		self.data_mut()
-	}
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        use super::Buffer;
+        self.data_mut()
+    }
 }

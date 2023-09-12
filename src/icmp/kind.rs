@@ -15,106 +15,106 @@
 /// ICMP packet types.
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum Kind {
-	///
-	EchoReply,
+    ///
+    EchoReply,
 
-	///
-	DestinationUnreachable,
+    ///
+    DestinationUnreachable,
 
-	///
-	SourceQuench,
+    ///
+    SourceQuench,
 
-	///
-	RedirectMessage,
+    ///
+    RedirectMessage,
 
-	///
-	EchoRequest,
+    ///
+    EchoRequest,
 
-	///
-	RouterAdvertisement,
+    ///
+    RouterAdvertisement,
 
-	///
-	RouterSolicitation,
+    ///
+    RouterSolicitation,
 
-	///
-	TimeExceeded,
+    ///
+    TimeExceeded,
 
-	///
-	ParameterProblem,
+    ///
+    ParameterProblem,
 
-	///
-	TimestampRequest,
+    ///
+    TimestampRequest,
 
-	///
-	TimestampReply,
+    ///
+    TimestampReply,
 
-	///
-	InformationRequest,
+    ///
+    InformationRequest,
 
-	///
-	InformationReply,
+    ///
+    InformationReply,
 
-	///
-	AddressMaskRequest,
+    ///
+    AddressMaskRequest,
 
-	///
-	AddressMaskReply,
+    ///
+    AddressMaskReply,
 
-	///
-	TraceRoute,
+    ///
+    TraceRoute,
 
-	///
-	Unknown(u8),
+    ///
+    Unknown(u8),
 }
 
 impl From<u8> for Kind {
-	fn from(value: u8) -> Kind {
-		use self::Kind::*;
+    fn from(value: u8) -> Kind {
+        use self::Kind::*;
 
-		match value {
-			0  => EchoReply,
-			3  => DestinationUnreachable,
-			4  => SourceQuench,
-			5  => RedirectMessage,
-			8  => EchoRequest,
-			9  => RouterAdvertisement,
-			10 => RouterSolicitation,
-			11 => TimeExceeded,
-			12 => ParameterProblem,
-			13 => TimestampRequest,
-			14 => TimestampReply,
-			15 => InformationRequest,
-			16 => InformationReply,
-			17 => AddressMaskRequest,
-			18 => AddressMaskReply,
-			30 => TraceRoute,
-			v  => Unknown(v),
-		}
-	}
+        match value {
+            0 => EchoReply,
+            3 => DestinationUnreachable,
+            4 => SourceQuench,
+            5 => RedirectMessage,
+            8 => EchoRequest,
+            9 => RouterAdvertisement,
+            10 => RouterSolicitation,
+            11 => TimeExceeded,
+            12 => ParameterProblem,
+            13 => TimestampRequest,
+            14 => TimestampReply,
+            15 => InformationRequest,
+            16 => InformationReply,
+            17 => AddressMaskRequest,
+            18 => AddressMaskReply,
+            30 => TraceRoute,
+            v => Unknown(v),
+        }
+    }
 }
 
-impl Into<u8> for Kind {
-	fn into(self) -> u8 {
-		use self::Kind::*;
+impl From<Kind> for u8 {
+    fn from(val: Kind) -> Self {
+        use self::Kind::*;
 
-		match self {
-			EchoReply              => 0,
-			DestinationUnreachable => 3,
-			SourceQuench           => 4,
-			RedirectMessage        => 5,
-			EchoRequest            => 8,
-			RouterAdvertisement    => 9,
-			RouterSolicitation     => 10,
-			TimeExceeded           => 11,
-			ParameterProblem       => 12,
-			TimestampRequest       => 13,
-			TimestampReply         => 14,
-			InformationRequest     => 15,
-			InformationReply       => 16,
-			AddressMaskRequest     => 17,
-			AddressMaskReply       => 18,
-			TraceRoute             => 30,
-			Unknown(v)             => v,
-		}
-	}
+        match val {
+            EchoReply => 0,
+            DestinationUnreachable => 3,
+            SourceQuench => 4,
+            RedirectMessage => 5,
+            EchoRequest => 8,
+            RouterAdvertisement => 9,
+            RouterSolicitation => 10,
+            TimeExceeded => 11,
+            ParameterProblem => 12,
+            TimestampRequest => 13,
+            TimestampReply => 14,
+            InformationRequest => 15,
+            InformationReply => 16,
+            AddressMaskRequest => 17,
+            AddressMaskReply => 18,
+            TraceRoute => 30,
+            Unknown(v) => v,
+        }
+    }
 }

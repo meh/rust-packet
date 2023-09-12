@@ -1,5 +1,5 @@
 [package]
-name    = "packet"
+name = "packet"
 version = "0.1.2"
 edition = "2018"
 
@@ -7,11 +7,11 @@ authors = ["meh. <meh@schizofreni.co>"]
 license = "WTFPL"
 
 description = "Network packet handling."
-repository  = "https://github.com/meh/rust-packet"
-keywords    = ["packet", "network", "ip", "tcp", "udp"]
+repository = "https://github.com/meh/rust-packet"
+keywords = ["packet", "network", "ip", "tcp", "udp"]
 
 [dependencies]
 thiserror = "1"
-bitflags  = "1"
+bitflags = "2.4"
 byteorder = "1"
-hwaddr    = "0.1"
+hwaddr = "0.1"

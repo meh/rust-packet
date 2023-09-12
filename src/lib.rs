@@ -21,7 +21,7 @@ pub mod size;
 pub use crate::size::Size;
 
 mod packet;
-pub use crate::packet::{Packet, PacketMut, AsPacket, AsPacketMut};
+pub use crate::packet::{AsPacket, AsPacketMut, Packet, PacketMut};
 
 /// Buffer abstractions, dynamic buffers and static buffers.
 pub mod buffer;
