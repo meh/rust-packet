@@ -40,35 +40,35 @@ use crate::error::*;
 /// assert_eq!(data.len(), 24);
 /// ```
 pub trait Buffer {
-	/// Inner type used by the buffer.
-	type Inner: AsMut<[u8]>;
+    /// Inner type used by the buffer.
+    type Inner: AsMut<[u8]>;
 
-	/// Convert the buffer into the inner type.
-	fn into_inner(self) -> Self::Inner;
+    /// Convert the buffer into the inner type.
+    fn into_inner(self) -> Self::Inner;
 
-	/// Go to the next layer requesting the given size, zeroeing the layer.
-	fn next(&mut self, size: usize) -> Result<()>;
+    /// Go to the next layer requesting the given size, zeroeing the layer.
+    fn next(&mut self, size: usize) -> Result<()>;
 
-	/// Request more memory for the same layer, zeroeing the new buffer area.
-	fn more(&mut self, size: usize) -> Result<()>;
+    /// Request more memory for the same layer, zeroeing the new buffer area.
+    fn more(&mut self, size: usize) -> Result<()>;
 
-	/// Clear the buffer.
-	fn clear(&mut self);
+    /// Clear the buffer.
+    fn clear(&mut self);
 
-	/// Number of bytes used by the whole buffer.
-	fn used(&self) -> usize;
+    /// Number of bytes used by the whole buffer.
+    fn used(&self) -> usize;
 
-	/// Offset from the beginning of the whole buffer.
-	fn offset(&self) -> usize;
+    /// Offset from the beginning of the whole buffer.
+    fn offset(&self) -> usize;
 
-	/// Length of the current layer.
-	fn length(&self) -> usize;
+    /// Length of the current layer.
+    fn length(&self) -> usize;
 
-	/// Get a slice over the current layer.
-	fn data(&self) -> &[u8];
+    /// Get a slice over the current layer.
+    fn data(&self) -> &[u8];
 
-	/// Get a mutable slice over the current layer.
-	fn data_mut(&mut self) -> &mut [u8];
+    /// Get a mutable slice over the current layer.
+    fn data_mut(&mut self) -> &mut [u8];
 }
 
 mod dynamic;

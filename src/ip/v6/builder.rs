@@ -12,38 +12,36 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-
-
-
-use crate::error::*;
 use crate::buffer::{self, Buffer};
 use crate::builder::{Builder as Build, Finalization};
+use crate::error::*;
 
 /// IPv6 packet builder.
+#[allow(dead_code)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
-	buffer:    B,
-	finalizer: Finalization,
+    buffer: B,
+    finalizer: Finalization,
 }
 
 impl<B: Buffer> Build<B> for Builder<B> {
-	fn with(buffer: B) -> Result<Self> {
-		Ok(Builder {
-			buffer:    buffer,
-			finalizer: Default::default(),
-		})
-	}
+    fn with(buffer: B) -> Result<Self> {
+        Ok(Builder {
+            buffer,
+            finalizer: Default::default(),
+        })
+    }
 
-	fn finalizer(&mut self) -> &mut Finalization {
-		&mut self.finalizer
-	}
+    fn finalizer(&mut self) -> &mut Finalization {
+        &mut self.finalizer
+    }
 
-	fn build(self) -> Result<B::Inner> {
-		Err(Error::InvalidPacket)
-	}
+    fn build(self) -> Result<B::Inner> {
+        Err(Error::InvalidPacket)
+    }
 }
 
 impl Default for Builder<buffer::Dynamic> {
-	fn default() -> Self {
-		Builder::with(buffer::Dynamic::default()).unwrap()
-	}
+    fn default() -> Self {
+        Builder::with(buffer::Dynamic::default()).unwrap()
+    }
 }

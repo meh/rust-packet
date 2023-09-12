@@ -12,109 +12,108 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-use std::fmt;
 use crate::error::*;
-use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
+use crate::packet::{AsPacket, AsPacketMut, Packet as P, PacketMut as PM};
+use std::fmt;
 
 /// IPv6 packet parser.
 #[derive(Clone)]
 pub struct Packet<B> {
-	buffer: B,
+    buffer: B,
 }
 
 sized!(Packet,
-	header {
-		min:  0,
-		max:  0,
-		size: 0,
-	}
+header {
+    min:  0,
+    max:  0,
+    size: 0,
+}
 
-	payload {
-		min:  0,
-		max:  0,
-		size: 0,
-	});
+payload {
+    min:  0,
+    max:  0,
+    size: 0,
+});
 
 impl<B: AsRef<[u8]>> fmt::Debug for Packet<B> {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		f.debug_struct("ip::v6::Packet")
-			.finish()
-	}
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ip::v6::Packet").finish()
+    }
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
-	/// Create an IPv6 packet without checking the buffer.
-	pub fn unchecked(buffer: B) -> Packet<B> {
-		Packet { buffer }
-	}
+    /// Create an IPv6 packet without checking the buffer.
+    pub fn unchecked(buffer: B) -> Packet<B> {
+        Packet { buffer }
+    }
 
-	/// Parse an IPv6 packet without checking the payload.
-	pub fn no_payload(buffer: B) -> Result<Packet<B>> {
-		use crate::size::header::Min;
+    /// Parse an IPv6 packet without checking the payload.
+    pub fn no_payload(buffer: B) -> Result<Packet<B>> {
+        use crate::size::header::Min;
 
-		let packet = Packet::unchecked(buffer);
+        let packet = Packet::unchecked(buffer);
 
-		if packet.buffer.as_ref().len() < Self::min() {
-			Err(Error::SmallBuffer)?
-		}
+        if packet.buffer.as_ref().len() < Self::min() {
+            Err(Error::SmallBuffer)?
+        }
 
-		if packet.buffer.as_ref()[0] >> 4 != 6 {
-			Err(Error::InvalidPacket)?
-		}
+        if packet.buffer.as_ref()[0] >> 4 != 6 {
+            Err(Error::InvalidPacket)?
+        }
 
-		Ok(packet)
-	}
+        Ok(packet)
+    }
 
-	/// Parse an IPv6 packet, checking the buffer contents are correct.
-	pub fn new(buffer: B) -> Result<Packet<B>> {
-		Packet::no_payload(buffer)
-	}
+    /// Parse an IPv6 packet, checking the buffer contents are correct.
+    pub fn new(buffer: B) -> Result<Packet<B>> {
+        Packet::no_payload(buffer)
+    }
 }
 
 impl<B: AsRef<[u8]>> Packet<B> {
-	/// Convert the packet to its owned version.
-	///
-	/// # Notes
-	///
-	/// It would be nice if `ToOwned` could be implemented, but `Packet` already
-	/// implements `Clone` and the impl would conflict.
-	pub fn to_owned(&self) -> Packet<Vec<u8>> {
-		Packet::unchecked(self.buffer.as_ref().to_vec())
-	}
+    /// Convert the packet to its owned version.
+    ///
+    /// # Notes
+    ///
+    /// It would be nice if `ToOwned` could be implemented, but `Packet` already
+    /// implements `Clone` and the impl would conflict.
+    pub fn to_owned(&self) -> Packet<Vec<u8>> {
+        Packet::unchecked(self.buffer.as_ref().to_vec())
+    }
 }
 
 impl<B: AsRef<[u8]>> AsRef<[u8]> for Packet<B> {
-	fn as_ref(&self) -> &[u8] {
-		&[]
-	}
+    fn as_ref(&self) -> &[u8] {
+        &[]
+    }
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> AsMut<[u8]> for Packet<B> {
-	fn as_mut(&mut self) -> &mut [u8] {
-		&mut []
-	}
+    fn as_mut(&mut self) -> &mut [u8] {
+        &mut []
+    }
 }
 
 impl<'a, B: AsRef<[u8]>> AsPacket<'a, Packet<&'a [u8]>> for B {
-	fn as_packet(&self) -> Result<Packet<&[u8]>> {
-		Packet::new(self.as_ref())
-	}
+    fn as_packet(&self) -> Result<Packet<&[u8]>> {
+        Packet::new(self.as_ref())
+    }
 }
 
 impl<'a, B: AsRef<[u8]> + AsMut<[u8]>> AsPacketMut<'a, Packet<&'a mut [u8]>> for B {
-	fn as_packet_mut(&mut self) -> Result<Packet<&mut [u8]>> {
-		Packet::new(self.as_mut())
-	}
+    fn as_packet_mut(&mut self) -> Result<Packet<&mut [u8]>> {
+        Packet::new(self.as_mut())
+    }
 }
 
 impl<B: AsRef<[u8]>> P for Packet<B> {
-	fn split(&self) -> (&[u8], &[u8]) {
-		(&[], &[])
-	}
+    fn split(&self) -> (&[u8], &[u8]) {
+        (&[], &[])
+    }
 }
 
 impl<B: AsRef<[u8]> + AsMut<[u8]>> PM for Packet<B> {
-	fn split_mut(&mut self) -> (&mut [u8], &mut [u8]) {
-		(&mut [], &mut [])
-	}
+    fn split_mut(&mut self) -> (&mut [u8], &mut [u8]) {
+        (&mut [], &mut [])
+    }
 }

@@ -28,24 +28,24 @@ pub use self::builder::Builder;
 
 /// Calculate the checksum for an IPv4 packet.
 pub fn checksum(buffer: &[u8]) -> u16 {
-	use std::io::Cursor;
-	use byteorder::{ReadBytesExt, BigEndian};
+    use byteorder::{BigEndian, ReadBytesExt};
+    use std::io::Cursor;
 
-	let mut result = 0xffffu32;
-	let mut buffer = Cursor::new(buffer);
+    let mut result = 0xffffu32;
+    let mut buffer = Cursor::new(buffer);
 
-	while let Ok(value) = buffer.read_u16::<BigEndian>() {
-		// Skip checksum field.
-		if buffer.position() == 12 {
-			continue;
-		}
+    while let Ok(value) = buffer.read_u16::<BigEndian>() {
+        // Skip checksum field.
+        if buffer.position() == 12 {
+            continue;
+        }
 
-		result += u32::from(value);
+        result += u32::from(value);
 
-		if result > 0xffff {
-			result -= 0xffff;
-		}
-	}
+        if result > 0xffff {
+            result -= 0xffff;
+        }
+    }
 
-	!result as u16
+    !result as u16
 }

@@ -29,7 +29,6 @@ pub use self::builder::Builder;
 use crate::ip;
 use crate::ip::Protocol;
 
-
 /// Calculate the checksum for a TCP packet.
 ///
 /// # Note
@@ -37,8 +36,8 @@ use crate::ip::Protocol;
 /// Since the checksum for UDP packets includes a pseudo-header based on the
 /// enclosing IP packet, one has to be given.
 pub fn checksum<B: AsRef<[u8]>>(ip: &ip::Packet<B>, buffer: &[u8]) -> u16 {
+    use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
     use std::io::Cursor;
-    use byteorder::{WriteBytesExt, ReadBytesExt, BigEndian};
 
     let buffer_length = buffer.len();
     let mut prefix = [0u8; 40];
@@ -49,7 +48,8 @@ pub fn checksum<B: AsRef<[u8]>>(ip: &ip::Packet<B>, buffer: &[u8]) -> u16 {
 
             prefix[9] = Protocol::Tcp.into();
             Cursor::new(&mut prefix[10..])
-                .write_u16::<BigEndian>(buffer.len() as u16).unwrap();
+                .write_u16::<BigEndian>(buffer.len() as u16)
+                .unwrap();
         }
 
         ip::Packet::V6(ref _packet) => {
@@ -60,11 +60,9 @@ pub fn checksum<B: AsRef<[u8]>>(ip: &ip::Packet<B>, buffer: &[u8]) -> u16 {
     let mut result = 0u32;
     let mut buffer = Cursor::new(buffer);
     let mut prefix = match *ip {
-        ip::Packet::V4(_) =>
-            Cursor::new(&prefix[0..12]),
+        ip::Packet::V4(_) => Cursor::new(&prefix[0..12]),
 
-        ip::Packet::V6(_) =>
-            Cursor::new(&prefix[0..40]),
+        ip::Packet::V6(_) => Cursor::new(&prefix[0..40]),
     };
 
     while let Ok(value) = prefix.read_u16::<BigEndian>() {
@@ -101,8 +99,8 @@ pub fn checksum<B: AsRef<[u8]>>(ip: &ip::Packet<B>, buffer: &[u8]) -> u16 {
 
 #[cfg(test)]
 mod test {
-    use crate::{Builder, Packet, tcp};
     use super::*;
+    use crate::{tcp, Builder, Packet};
 
     #[test]
     fn test_tcp_checksum_on_odd_length() {
@@ -140,7 +138,9 @@ mod test {
             .unwrap();
         let fake_ip_header = ip::Packet::unchecked(&fake_ip_header);
 
-        tcp_parse.update_checksum(&fake_ip_header).expect("checksum update failed");
+        tcp_parse
+            .update_checksum(&fake_ip_header)
+            .expect("checksum update failed");
         let checksum = tcp_parse.checksum();
         assert_eq!(checksum_orig, checksum);
     }

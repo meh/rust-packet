@@ -12,28 +12,28 @@
 //
 //  0. You just DO WHAT THE FUCK YOU WANT TO.
 
-use std::{io, ffi};
+use std::{ffi, io};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
-	#[error("the buffer is too small")]
-	SmallBuffer,
+    #[error("the buffer is too small")]
+    SmallBuffer,
 
-	#[error("the packet is invalid")]
-	InvalidPacket,
+    #[error("the packet is invalid")]
+    InvalidPacket,
 
-	#[error("the vaue is invalid for the field")]
-	InvalidValue,
+    #[error("the vaue is invalid for the field")]
+    InvalidValue,
 
-	#[error("the value has already been defined")]
-	AlreadyDefined,
+    #[error("the value has already been defined")]
+    AlreadyDefined,
 
-	#[error(transparent)]
-	Io(#[from] io::Error),
+    #[error(transparent)]
+    Io(#[from] io::Error),
 
-	#[error(transparent)]
-	Nul(#[from] ffi::NulError),
+    #[error(transparent)]
+    Nul(#[from] ffi::NulError),
 }
 
-pub type Result<T> = ::std::result::Result<T, Error>;
+pub type Result<T, E = Error> = ::std::result::Result<T, E>;
