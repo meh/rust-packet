@@ -17,7 +17,6 @@ use std::net::Ipv6Addr;
 use crate::error::*;
 use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
 use crate::ip::Protocol;
-use byteorder::{ReadBytesExt, BigEndian};
 
 /// IPv6 packet parser.
 #[derive(Clone)]

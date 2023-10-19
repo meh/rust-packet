@@ -20,6 +20,7 @@ use crate::buffer::{self, Buffer};
 use crate::builder::{Builder as Build, Finalization};
 
 /// IPv6 packet builder.
+#[allow(dead_code)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,

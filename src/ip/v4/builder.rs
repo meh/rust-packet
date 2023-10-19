@@ -27,6 +27,7 @@ use crate::ip::v4::checksum;
 
 /// IPv4 packet builder.
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,
