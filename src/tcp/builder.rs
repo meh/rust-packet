@@ -26,6 +26,7 @@ use crate::tcp::checksum;
 
 /// TCP packet builder.
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Builder<B: Buffer = buffer::Dynamic> {
 	buffer:    B,
 	finalizer: Finalization,

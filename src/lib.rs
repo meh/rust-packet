@@ -34,6 +34,9 @@ pub use crate::builder::Builder;
 /// Ethernet packet parser and builder.
 pub mod ether;
 
+/// SLL (Linux Cooked Capture) parser and builder.
+pub mod sll;
+
 /// IPv4 and IPv6 packet parser and builder.
 pub mod ip;
 
