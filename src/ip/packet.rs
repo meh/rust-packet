@@ -18,7 +18,7 @@ use crate::size;
 use crate::ip::{v4, v6};
 
 /// Generic IP packet.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Packet<B: AsRef<[u8]>> {
 	/// IPv4 packet.
 	V4(v4::Packet<B>),
