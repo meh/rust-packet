@@ -14,6 +14,7 @@
 
 use std::fmt;
 use std::net::Ipv4Addr;
+use log::error;
 
 use crate::error::*;
 use crate::packet::{Packet as P, PacketMut as PM, AsPacket, AsPacketMut};
@@ -68,6 +69,7 @@ impl<B: AsRef<[u8]>> Packet<B> {
 		let packet = Packet::unchecked(buffer);
 
 		if packet.buffer.as_ref().len() < Self::min() {
+			error!("buffer is too short for the packet minimum length: {} < {}", packet.buffer.as_ref().len(), Self::min());
 			Err(Error::SmallBuffer)?
 		}
 
