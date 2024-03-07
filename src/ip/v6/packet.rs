@@ -78,7 +78,6 @@ impl<B: AsRef<[u8]>> Packet<B> {
             Err(Error::SmallBuffer)?
         }
 
-		println!("version: {}", packet.buffer.as_ref()[0] >> 4);
         if packet.buffer.as_ref()[0] >> 4 != 6 {
             Err(Error::InvalidPacket)?
         }

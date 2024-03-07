@@ -37,7 +37,7 @@ impl<B: Buffer> Build<B> for Builder<B> {
 	}
 
 	fn build(self) -> Result<B::Inner> {
-		Err(Error::InvalidPacket)
+		Ok(self.buffer.into_inner())
 	}
 }
 
