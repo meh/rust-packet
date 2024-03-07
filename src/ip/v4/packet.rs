@@ -215,8 +215,8 @@ impl<B: AsRef<[u8]>> Packet<B> {
 
 	/// Flags of the packet.
 	pub fn flags(&self) -> Flags {
-		Flags::from_bits((&self.buffer.as_ref()[6 ..])
-			.read_u16::<BigEndian>().unwrap() >> 13).unwrap()
+		Flags::from_bits_truncate((&self.buffer.as_ref()[6 ..])
+			.read_u16::<BigEndian>().unwrap() >> 13)
 	}
 
 	/// Offset of the packet.
